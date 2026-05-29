@@ -443,6 +443,87 @@
     .rc-meta { font-size: 11px; color: var(--text3); }
     .rc-price { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 600; }
 
+    /* ── 수익률 섹션 ── */
+    .returns-section { margin-top: 32px; }
+
+    .returns-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .ret-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ret-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .ret-card.profit::before { background: linear-gradient(90deg, #ff5757, #ff9090); }
+    .ret-card.loss::before   { background: linear-gradient(90deg, #3db9ff, #7dcfef); }
+    .ret-card.flat::before   { background: var(--border); }
+    .ret-card.loading::before { background: var(--border); }
+
+    .ret-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+    .ret-name {
+      font-size: 13px; font-weight: 700; margin-bottom: 10px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .ret-prices {
+      display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;
+    }
+
+    .ret-current {
+      font-size: 20px; font-weight: 800; line-height: 1;
+    }
+    .ret-current.profit { color: var(--up); }
+    .ret-current.loss   { color: var(--down); }
+    .ret-current.flat   { color: var(--text2); }
+
+    .ret-offer {
+      font-size: 11px; color: var(--text3);
+      text-decoration: line-through;
+    }
+
+    .ret-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 8px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; margin-bottom: 8px;
+    }
+    .ret-badge.profit { background: rgba(255,87,87,0.15); color: var(--up); }
+    .ret-badge.loss   { background: rgba(61,185,255,0.15); color: var(--down); }
+    .ret-badge.flat   { background: var(--badge-closed); color: var(--closed); }
+
+    .ret-meta { font-size: 11px; color: var(--text3); }
+
+    /* 스켈레톤 로딩 */
+    .ret-skeleton {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .skel-line {
+      background: var(--surface2);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0%,100% { opacity: 0.5; } 50% { opacity: 1; }
+    }
+
     /* ── 상세 모달 ── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 1000;
@@ -861,15 +942,86 @@ function buildOngoingEmpty() {
     </div>`;
   }
 
+  // 수익률 섹션 (카드가 있을 때만)
+  const returnsHtml = top5.length ? `
+    <div class="returns-section">
+      <div class="recent-section-title">공모가 대비 수익률</div>
+      <div class="returns-cards" id="returnsCards">
+        <!-- JS로 채워짐 -->
+      </div>
+    </div>` : '';
+
   return `<tr><td colspan="6">
     <div class="no-ongoing">
       ${countdownHtml}
       ${cardsHtml}
+      ${returnsHtml}
     </div>
   </td></tr>`;
 }
 
 let cdTimer = null;
+let returnsLoaded = false;
+
+async function loadReturnsSection() {
+  if (returnsLoaded) return;
+
+  // 스켈레톤 먼저 표시
+  const el = document.getElementById('returnsCards');
+  if (!el) return;
+  el.innerHTML = Array(6).fill(0).map(() => `
+    <div class="ret-skeleton">
+      <div class="skel-line" style="height:14px;width:60%"></div>
+      <div class="skel-line" style="height:28px;width:80%"></div>
+      <div class="skel-line" style="height:20px;width:50%"></div>
+      <div class="skel-line" style="height:12px;width:70%"></div>
+    </div>`).join('');
+
+  try {
+    const res = await fetch('/api/ipos/returns');
+    const data = await res.json();
+    returnsLoaded = true;
+    renderReturnsCards(data);
+  } catch(e) {
+    el.innerHTML = `<p style="color:var(--text3);font-size:13px">수익률 데이터를 불러오지 못했습니다.</p>`;
+  }
+}
+
+function renderReturnsCards(items) {
+  const el = document.getElementById('returnsCards');
+  if (!el) return;
+  if (!items || !items.length) {
+    el.innerHTML = `<p style="color:var(--text3);font-size:13px">수익률 데이터가 없습니다.</p>`;
+    return;
+  }
+
+  el.innerHTML = items.map(d => {
+    const pct = d.return_pct;
+    const cls = pct === null ? 'flat' : pct > 0 ? 'profit' : pct < 0 ? 'loss' : 'flat';
+    const arrow = pct === null ? '—' : pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
+    const pctLabel = pct !== null ? `${arrow} ${Math.abs(pct).toFixed(2)}%` : '상장 전';
+    const currentLabel = d.current_price ? d.current_price.toLocaleString() + '원' : '—';
+    const offerLabel   = d.offer_price   ? d.offer_price.toLocaleString() + '원'   : '—';
+
+    // 모달용 ipo 객체 (allData에서 찾기)
+    const ipo = [...allData.closed, ...allData.ongoing].find(x => x.no === d.no) || { ...d, status: 'closed' };
+
+    return `<div class="ret-card ${cls}" onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'>
+      <div class="ret-name">${escHtml(d.name)}</div>
+      <div class="ret-prices">
+        <span class="ret-current ${cls}">${escHtml(currentLabel)}</span>
+        <span class="ret-offer">${escHtml(offerLabel)}</span>
+      </div>
+      <div>
+        <span class="ret-badge ${cls}">${escHtml(pctLabel)}</span>
+      </div>
+      <div class="ret-meta">
+        ${exchangeBadge(d.market)}
+        ${d.listing_date ? `· 상장 ${escHtml(d.listing_date)}` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
 
 function startCountdown(targetMs) {
   if (cdTimer) clearInterval(cdTimer);
@@ -1056,6 +1208,12 @@ function render() {
 
   const currentCount = currentTab === 'ongoing' ? og.length : currentTab === 'new' ? nw.length : cl.length;
   document.getElementById('resultCount').textContent = `${currentCount}개 종목`;
+
+  // 진행중 없을 때 수익률 섹션 로드
+  if (allData.ongoing.length === 0 && document.getElementById('returnsCards')) {
+    returnsLoaded = false; // 데이터 갱신 시 재로드
+    loadReturnsSection();
+  }
 }
 
 // ── Data fetch ────────────────────────────────────────────────────────────────

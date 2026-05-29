@@ -277,6 +277,42 @@ def api_ipos():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/ipos/returns')
+def api_returns():
+    """최근 마감 인기 종목 상위 N개의 공모가 대비 현재가·수익률 반환 (병렬 fetch)"""
+    async def fetch_all():
+        data = await get_data()
+        top = [x for x in data['closed'] if x.get('no') and x.get('price')][:6]
+
+        async def fetch_one(ipo):
+            detail = await get_detail(ipo['no'])
+            cp = detail.get('current_price')
+            current = int(cp) if cp else None
+            offer   = ipo['price']
+            ret_pct = round((current - offer) / offer * 100, 2) if current and offer else None
+            return {
+                'no':            ipo['no'],
+                'name':          ipo['name'],
+                'market':        ipo['market'],
+                'offer_price':   offer,
+                'current_price': current,
+                'return_pct':    ret_pct,
+                'listing_date':  detail.get('listing_date'),
+                'rate':          ipo['rate'],
+            }
+
+        return await asyncio.gather(*[fetch_one(ipo) for ipo in top])
+
+    try:
+        results = asyncio.run(fetch_all())
+        resp = jsonify(list(results))
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Cache-Control'] = 'no-cache'
+        return resp
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/ipos/<no>/detail')
 def api_detail(no):
     if not re.match(r'^\d+$', no):
