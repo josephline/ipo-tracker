@@ -446,83 +446,49 @@
     /* ── 수익률 섹션 ── */
     .returns-section { margin-top: 32px; }
 
-    .returns-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+    .ret-table { width: 100%; border-collapse: collapse; }
+
+    .ret-table thead tr { border-bottom: 1px solid var(--border); }
+    .ret-table thead th {
+      padding: 10px 16px; font-size: 11px; font-weight: 600;
+      color: var(--text3); text-align: left; letter-spacing: 0.05em; text-transform: uppercase;
     }
+    .ret-table thead th.right { text-align: right; }
 
-    .ret-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: border-color 0.2s, transform 0.2s;
-      position: relative;
-      overflow: hidden;
+    .ret-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background 0.15s;
     }
+    .ret-table tbody tr:last-child { border-bottom: none; }
+    .ret-table tbody tr:hover { background: var(--surface); }
+    .ret-table tbody tr:hover .company-name { color: var(--primary-light); }
 
-    .ret-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-    }
-
-    .ret-card.profit::before { background: linear-gradient(90deg, #ff5757, #ff9090); }
-    .ret-card.loss::before   { background: linear-gradient(90deg, #3db9ff, #7dcfef); }
-    .ret-card.flat::before   { background: var(--border); }
-    .ret-card.loading::before { background: var(--border); }
-
-    .ret-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-
-    .ret-name {
-      font-size: 13px; font-weight: 700; margin-bottom: 10px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
-    .ret-prices {
-      display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;
-    }
-
-    .ret-current {
-      font-size: 20px; font-weight: 800; line-height: 1;
-    }
-    .ret-current.profit { color: var(--up); }
-    .ret-current.loss   { color: var(--down); }
-    .ret-current.flat   { color: var(--text2); }
-
-    .ret-offer {
-      font-size: 11px; color: var(--text3);
-      text-decoration: line-through;
-    }
+    .ret-table tbody td { padding: 13px 16px; font-size: 13px; vertical-align: middle; }
+    .ret-table tbody td.right { text-align: right; }
 
     .ret-badge {
       display: inline-flex; align-items: center; gap: 3px;
-      padding: 3px 8px; border-radius: 20px;
-      font-size: 12px; font-weight: 700; margin-bottom: 8px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 13px; font-weight: 700;
     }
     .ret-badge.profit { background: rgba(255,87,87,0.15); color: var(--up); }
     .ret-badge.loss   { background: rgba(61,185,255,0.15); color: var(--down); }
-    .ret-badge.flat   { background: var(--badge-closed); color: var(--closed); }
+    .ret-badge.flat   { background: var(--badge-closed);   color: var(--closed); }
 
-    .ret-meta { font-size: 11px; color: var(--text3); }
+    .ret-price-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .ret-current { font-size: 14px; font-weight: 700; }
+    .ret-current.profit { color: var(--up); }
+    .ret-current.loss   { color: var(--down); }
+    .ret-current.flat   { color: var(--text2); }
+    .ret-offer { font-size: 11px; color: var(--text3); text-decoration: line-through; }
 
     /* 스켈레톤 로딩 */
-    .ret-skeleton {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 16px;
-    }
+    .skel-row td { padding: 13px 16px; }
     .skel-line {
-      background: var(--surface2);
-      border-radius: 4px;
-      margin-bottom: 8px;
+      background: var(--surface2); border-radius: 4px;
       animation: shimmer 1.4s infinite;
     }
-    @keyframes shimmer {
-      0%,100% { opacity: 0.5; } 50% { opacity: 1; }
-    }
+    @keyframes shimmer { 0%,100% { opacity:0.4; } 50% { opacity:0.9; } }
 
     /* ── 상세 모달 ── */
     .modal-overlay {
@@ -966,61 +932,87 @@ let returnsLoaded = false;
 async function loadReturnsSection() {
   if (returnsLoaded) return;
 
-  // 스켈레톤 먼저 표시
   const el = document.getElementById('returnsCards');
   if (!el) return;
-  el.innerHTML = Array(6).fill(0).map(() => `
-    <div class="ret-skeleton">
-      <div class="skel-line" style="height:14px;width:60%"></div>
-      <div class="skel-line" style="height:28px;width:80%"></div>
-      <div class="skel-line" style="height:20px;width:50%"></div>
-      <div class="skel-line" style="height:12px;width:70%"></div>
-    </div>`).join('');
+
+  // 스켈레톤
+  el.innerHTML = `<table class="ret-table"><tbody>
+    ${Array(6).fill(0).map(() => `<tr class="skel-row">
+      <td><div class="skel-line" style="height:14px;width:140px"></div></td>
+      <td><div class="skel-line" style="height:14px;width:60px"></div></td>
+      <td><div class="skel-line" style="height:14px;width:80px"></div></td>
+      <td><div class="skel-line" style="height:14px;width:80px"></div></td>
+      <td><div class="skel-line" style="height:14px;width:70px"></div></td>
+      <td><div class="skel-line" style="height:14px;width:90px"></div></td>
+    </tr>`).join('')}
+  </tbody></table>`;
 
   try {
     const res = await fetch('/api/ipos/returns');
     const data = await res.json();
     returnsLoaded = true;
-    renderReturnsCards(data);
+    renderReturnsTable(data);
   } catch(e) {
-    el.innerHTML = `<p style="color:var(--text3);font-size:13px">수익률 데이터를 불러오지 못했습니다.</p>`;
+    el.innerHTML = `<p style="color:var(--text3);font-size:13px;padding:16px 0">수익률 데이터를 불러오지 못했습니다.</p>`;
   }
 }
 
-function renderReturnsCards(items) {
+function renderReturnsTable(items) {
   const el = document.getElementById('returnsCards');
   if (!el) return;
   if (!items || !items.length) {
-    el.innerHTML = `<p style="color:var(--text3);font-size:13px">수익률 데이터가 없습니다.</p>`;
+    el.innerHTML = `<p style="color:var(--text3);font-size:13px;padding:16px 0">수익률 데이터가 없습니다.</p>`;
     return;
   }
 
-  el.innerHTML = items.map(d => {
+  const rows = items.map(d => {
     const pct = d.return_pct;
     const cls = pct === null ? 'flat' : pct > 0 ? 'profit' : pct < 0 ? 'loss' : 'flat';
     const arrow = pct === null ? '—' : pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
     const pctLabel = pct !== null ? `${arrow} ${Math.abs(pct).toFixed(2)}%` : '상장 전';
     const currentLabel = d.current_price ? d.current_price.toLocaleString() + '원' : '—';
     const offerLabel   = d.offer_price   ? d.offer_price.toLocaleString() + '원'   : '—';
-
-    // 모달용 ipo 객체 (allData에서 찾기)
     const ipo = [...allData.closed, ...allData.ongoing].find(x => x.no === d.no) || { ...d, status: 'closed' };
 
-    return `<div class="ret-card ${cls}" onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'>
-      <div class="ret-name">${escHtml(d.name)}</div>
-      <div class="ret-prices">
-        <span class="ret-current ${cls}">${escHtml(currentLabel)}</span>
-        <span class="ret-offer">${escHtml(offerLabel)}</span>
-      </div>
-      <div>
+    return `<tr onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'>
+      <td>
+        <div class="company-cell">
+          <div class="company-logo">${escHtml(abbr(d.name))}</div>
+          <div>
+            <div class="company-name">${escHtml(d.name)}</div>
+            <div class="company-sector">${exchangeBadge(d.market)}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="status-badge closed">마감</span></td>
+      <td>
         <span class="ret-badge ${cls}">${escHtml(pctLabel)}</span>
-      </div>
-      <div class="ret-meta">
-        ${exchangeBadge(d.market)}
-        ${d.listing_date ? `· 상장 ${escHtml(d.listing_date)}` : ''}
-      </div>
-    </div>`;
+      </td>
+      <td class="right">
+        <div class="ret-price-wrap">
+          <span class="ret-current ${cls}">${escHtml(currentLabel)}</span>
+          <span class="ret-offer">공모가 ${escHtml(offerLabel)}</span>
+        </div>
+      </td>
+      <td>
+        <div class="date-range">${d.listing_date ? escHtml(d.listing_date) : '—'}</div>
+        <div class="date-sub">상장일</div>
+      </td>
+      <td class="right" style="color:var(--text3);font-size:12px">${d.rate ? d.rate.toLocaleString()+':1' : '—'}</td>
+    </tr>`;
   }).join('');
+
+  el.innerHTML = `<table class="ret-table">
+    <thead><tr>
+      <th>종목명</th>
+      <th>상태</th>
+      <th>수익률</th>
+      <th class="right">현재가 / 공모가</th>
+      <th>상장일</th>
+      <th class="right">청약 경쟁률</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 function startCountdown(targetMs) {
