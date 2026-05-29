@@ -7,6 +7,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ── 다크 모드 (기본) ── */
     :root {
       --bg: #0f1117;
       --surface: #1a1d27;
@@ -25,6 +26,32 @@
       --badge-new: rgba(240,160,64,0.15);
       --badge-ongoing: rgba(80,201,110,0.15);
       --badge-closed: rgba(139,143,168,0.12);
+    }
+
+    /* ── 라이트 모드 ── */
+    [data-theme="light"] {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface2: #eef1f8;
+      --border: #dde1ee;
+      --primary: #4a58e0;
+      --primary-light: #6270e8;
+      --up: #e03535;
+      --down: #1e9fd4;
+      --text: #13172e;
+      --text2: #4a5068;
+      --text3: #8690a8;
+      --new: #d47c10;
+      --ongoing: #27a84e;
+      --closed: #7a8099;
+      --badge-new: rgba(212,124,16,0.12);
+      --badge-ongoing: rgba(39,168,78,0.12);
+      --badge-closed: rgba(122,128,153,0.1);
+    }
+
+    /* 테마 전환 트랜지션 */
+    *, *::before, *::after {
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
     }
 
     body {
@@ -102,6 +129,49 @@
     }
 
     .update-time { font-size: 11px; color: var(--text3); }
+
+    /* ── 테마 토글 ── */
+    .theme-toggle {
+      position: relative;
+      width: 52px; height: 28px;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    .theme-toggle input {
+      opacity: 0; width: 0; height: 0; position: absolute;
+    }
+
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: background 0.25s, border-color 0.25s;
+      display: flex; align-items: center;
+      padding: 0 4px;
+      justify-content: space-between;
+    }
+
+    .toggle-icon { font-size: 12px; line-height: 1; pointer-events: none; }
+
+    .toggle-thumb {
+      position: absolute;
+      width: 20px; height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      top: 3px; left: 4px;
+      transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .theme-toggle input:checked ~ .toggle-thumb {
+      transform: translateX(24px);
+    }
+
+    [data-theme="light"] .toggle-track {
+      background: #e8edf8;
+      border-color: #c8d0e8;
+    }
 
     /* Summary */
     .summary-bar {
@@ -294,7 +364,7 @@
 
     /* 카운트다운 배너 */
     .countdown-banner {
-      background: linear-gradient(135deg, #1a1d27 0%, #1e2236 50%, #1a1d27 100%);
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 50%, var(--surface) 100%);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 32px 36px;
@@ -686,6 +756,14 @@
       <span class="live-dot">실시간</span>
       <span class="source-badge">출처: 38커뮤니케이션</span>
       <span class="update-time" id="updateTime">로딩 중...</span>
+      <label class="theme-toggle" title="다크/라이트 모드 전환">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme(this)" />
+        <div class="toggle-track">
+          <span class="toggle-icon">🌙</span>
+          <span class="toggle-icon">☀️</span>
+        </div>
+        <div class="toggle-thumb"></div>
+      </label>
       <a href="https://t.me/lineblock5" target="_blank" rel="noopener" class="lineblock-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.04 9.61c-.152.676-.554.84-1.122.522l-3.1-2.284-1.496 1.44c-.165.165-.304.304-.624.304l.223-3.165 5.76-5.203c.25-.223-.055-.347-.388-.124l-7.12 4.482-3.067-.957c-.667-.208-.68-.667.14-.987l11.978-4.617c.555-.2 1.04.124.856.979z"/></svg>
         라인블록
@@ -1418,6 +1496,23 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+// ── 테마 토글 ──────────────────────────────────────────────────────────────
+function toggleTheme(checkbox) {
+  const theme = checkbox.checked ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+  localStorage.setItem('theme', theme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  const toggle = document.getElementById('themeToggle');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    toggle.checked = true;
+  }
+}
+
+initTheme();
 fetchData();
 setInterval(fetchData, REFRESH_MS);
 </script>
