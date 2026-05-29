@@ -847,7 +847,7 @@ function buildOngoingEmpty() {
       ${top5.map(d => {
         const rc = rateClass(d.rate);
         const bw = barWidth(d.rate);
-        return `<div class="recent-card">
+        return `<div class="recent-card" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
           <div class="rc-header">
             <div class="rc-name">${escHtml(d.name)}</div>
             ${exchangeBadge(d.market)}
