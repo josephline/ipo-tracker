@@ -443,6 +443,32 @@
     .rc-meta { font-size: 11px; color: var(--text3); }
     .rc-price { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 600; }
 
+    /* 라인블록 배지 */
+    .lineblock-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px;
+      background: linear-gradient(135deg, #229ED9, #1a7fb5);
+      color: #fff; font-size: 12px; font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(34,158,217,0.35);
+    }
+    .lineblock-badge:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* 푸터 */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-text { font-size: 12px; color: var(--text3); }
+
     .error-banner {
       background: rgba(255,87,87,0.1); border: 1px solid rgba(255,87,87,0.3);
       border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
@@ -478,6 +504,10 @@
       <span class="live-dot">실시간</span>
       <span class="source-badge">출처: 38커뮤니케이션</span>
       <span class="update-time" id="updateTime">로딩 중...</span>
+      <a href="https://t.me/lineblock5" target="_blank" rel="noopener" class="lineblock-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.04 9.61c-.152.676-.554.84-1.122.522l-3.1-2.284-1.496 1.44c-.165.165-.304.304-.624.304l.223-3.165 5.76-5.203c.25-.223-.055-.347-.388-.124l-7.12 4.482-3.067-.957c-.667-.208-.68-.667.14-.987l11.978-4.617c.555-.2 1.04.124.856.979z"/></svg>
+        라인블록
+      </a>
     </div>
   </div>
 </header>
@@ -931,5 +961,16 @@ function switchTab(tab) {
 fetchData();
 setInterval(fetchData, REFRESH_MS);
 </script>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span class="footer-text">공모주 청약 현황 · 출처: 38커뮤니케이션</span>
+    <span class="footer-text">·</span>
+    <a href="https://t.me/lineblock5" target="_blank" rel="noopener" class="lineblock-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.04 9.61c-.152.676-.554.84-1.122.522l-3.1-2.284-1.496 1.44c-.165.165-.304.304-.624.304l.223-3.165 5.76-5.203c.25-.223-.055-.347-.388-.124l-7.12 4.482-3.067-.957c-.667-.208-.68-.667.14-.987l11.978-4.617c.555-.2 1.04.124.856.979z"/></svg>
+      라인블록
+    </a>
+  </div>
+</footer>
 </body>
 </html>
