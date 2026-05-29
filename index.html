@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공모주 청약 현황</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222535;
+      --border: #2e3148;
+      --primary: #5b6af0;
+      --primary-light: #7b8af5;
+      --up: #ff5757;
+      --down: #3db9ff;
+      --text: #e8eaf6;
+      --text2: #8b8fa8;
+      --text3: #5c6080;
+      --new: #f0a040;
+      --ongoing: #50c96e;
+      --closed: #8b8fa8;
+      --badge-new: rgba(240,160,64,0.15);
+      --badge-ongoing: rgba(80,201,110,0.15);
+      --badge-closed: rgba(139,143,168,0.12);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .live-dot {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--ongoing); font-size: 12px;
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--ongoing);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.5; transform:scale(1.3); }
+    }
+
+    .source-badge {
+      font-size: 11px; color: var(--text3);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+
+    .update-time { font-size: 11px; color: var(--text3); }
+
+    /* Summary */
+    .summary-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+
+    .summary-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+    }
+
+    .summary-card { display: flex; flex-direction: column; gap: 2px; }
+    .summary-label { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; }
+    .summary-value { font-size: 20px; font-weight: 700; }
+    .summary-value.up { color: var(--up); }
+    .summary-value.ongoing { color: var(--ongoing); }
+    .summary-value.new-clr { color: var(--new); }
+    .summary-divider { width: 1px; background: var(--border); align-self: stretch; }
+
+    /* Tabs */
+    .tabs-wrap {
+      max-width: 1200px; margin: 24px auto 0; padding: 0 24px;
+    }
+
+    .tabs {
+      display: flex; gap: 4px;
+      background: var(--surface); border-radius: 12px;
+      padding: 4px; width: fit-content;
+      border: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 8px 20px; border-radius: 9px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      color: var(--text2); border: none; background: none;
+      display: flex; align-items: center; gap: 7px;
+    }
+
+    .tab .cnt {
+      font-size: 11px; padding: 1px 7px; border-radius: 20px;
+    }
+
+    .tab.active { background: var(--primary); color: #fff; }
+    .tab.active .cnt { background: rgba(255,255,255,0.2); color: #fff; }
+    .tab:not(.active):hover { background: var(--surface2); color: var(--text); }
+    .tab.t-ongoing .cnt { background: var(--badge-ongoing); color: var(--ongoing); }
+    .tab.t-new .cnt { background: var(--badge-new); color: var(--new); }
+    .tab.t-closed .cnt { background: var(--badge-closed); color: var(--closed); }
+
+    /* Filter */
+    .filter-bar {
+      max-width: 1200px; margin: 16px auto 0; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+
+    .filter-left { display: flex; align-items: center; gap: 8px; }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px;
+    }
+
+    .search-box input {
+      background: none; border: none; outline: none;
+      color: var(--text); font-size: 13px; width: 160px;
+    }
+
+    .search-box input::placeholder { color: var(--text3); }
+
+    .sort-select {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 10px;
+      font-size: 13px; color: var(--text2); cursor: pointer; outline: none;
+    }
+
+    .filter-right { font-size: 12px; color: var(--text3); }
+
+    /* Table */
+    .table-wrap {
+      max-width: 1200px; margin: 16px auto 60px; padding: 0 24px;
+    }
+
+    .ipo-table { width: 100%; border-collapse: collapse; }
+    .ipo-table thead tr { border-bottom: 1px solid var(--border); }
+    .ipo-table thead th {
+      padding: 10px 16px; font-size: 11px; font-weight: 600;
+      color: var(--text3); text-align: left; letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .ipo-table thead th.right { text-align: right; }
+    .ipo-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s; cursor: pointer;
+    }
+    .ipo-table tbody tr:hover { background: var(--surface); }
+    .ipo-table tbody tr:last-child { border-bottom: none; }
+    .ipo-table tbody td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+    .ipo-table tbody td.right { text-align: right; }
+
+    .company-cell { display: flex; align-items: center; gap: 12px; }
+    .company-logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--primary-light); flex-shrink: 0;
+    }
+    .company-name { font-size: 14px; font-weight: 600; }
+    .company-sector { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .status-badge::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+    }
+    .status-badge.ongoing { background: var(--badge-ongoing); color: var(--ongoing); }
+    .status-badge.new { background: var(--badge-new); color: var(--new); }
+    .status-badge.closed { background: var(--badge-closed); color: var(--closed); }
+    .status-badge.ongoing::before { animation: pulse 1.5s infinite; }
+
+    .rate-cell { min-width: 180px; }
+    .rate-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .rate-value { font-size: 15px; font-weight: 700; }
+    .rate-value.hot { color: var(--up); }
+    .rate-value.warm { color: var(--new); }
+    .rate-value.cool { color: var(--down); }
+    .rate-value.na { color: var(--text3); }
+
+    .rate-bar-bg { height: 4px; background: var(--border); border-radius: 2px; }
+    .rate-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+    .rate-bar-fill.hot { background: linear-gradient(90deg,#ff9090,var(--up)); }
+    .rate-bar-fill.warm { background: linear-gradient(90deg,#f5c570,var(--new)); }
+    .rate-bar-fill.cool { background: linear-gradient(90deg,#7dcfef,var(--down)); }
+    .rate-bar-fill.na { background: var(--border); }
+
+    .price-range { font-size: 12px; color: var(--text3); }
+    .offer-price { font-size: 14px; font-weight: 600; }
+    .date-range { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .date-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    .dday {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 4px; font-size: 11px; font-weight: 700;
+    }
+    .dday.today { background: rgba(255,87,87,0.15); color: var(--up); }
+    .dday.soon { background: rgba(91,106,240,0.15); color: var(--primary-light); }
+    .dday.over { background: var(--badge-closed); color: var(--closed); }
+
+    .exchange { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+    .exchange.kospi { background: rgba(91,106,240,0.15); color: var(--primary-light); }
+    .exchange.kosdaq { background: rgba(80,201,110,0.12); color: var(--ongoing); }
+
+    .underwriter { font-size: 12px; color: var(--text2); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Loading */
+    .loading-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 80px 0; gap: 16px;
+    }
+
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { font-size: 14px; color: var(--text3); }
+
+    .empty-state { text-align: center; padding: 80px 0; color: var(--text3); }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── 진행중 없을 때 빈 화면 ── */
+    .no-ongoing {
+      padding: 32px 0 48px;
+    }
+
+    /* 카운트다운 배너 */
+    .countdown-banner {
+      background: linear-gradient(135deg, #1a1d27 0%, #1e2236 50%, #1a1d27 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .countdown-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--primary-light), transparent);
+    }
+
+    .countdown-glow {
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(91,106,240,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .countdown-left { flex: 1; min-width: 0; }
+
+    .countdown-eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--primary-light); text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .countdown-name {
+      font-size: 22px; font-weight: 800;
+      color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 6px;
+    }
+
+    .countdown-meta {
+      font-size: 13px; color: var(--text3);
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+
+    .countdown-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .countdown-right {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .cd-box {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 18px; min-width: 72px;
+    }
+
+    .cd-num {
+      font-size: 32px; font-weight: 800;
+      color: var(--text); line-height: 1;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    .cd-num.highlight { color: var(--primary-light); }
+
+    .cd-label {
+      font-size: 10px; color: var(--text3);
+      margin-top: 4px; letter-spacing: 0.05em;
+    }
+
+    .cd-sep {
+      font-size: 28px; font-weight: 300; color: var(--border);
+      align-self: center; padding-bottom: 4px;
+    }
+
+    /* 최근 마감 카드 */
+    .recent-section-title {
+      font-size: 13px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .recent-section-title::after {
+      content: '';
+      flex: 1; height: 1px; background: var(--border);
+    }
+
+    .recent-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .recent-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+
+    .recent-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .rc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .rc-name {
+      font-size: 13px; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 120px;
+    }
+
+    .rc-rate {
+      font-size: 18px; font-weight: 800; margin-bottom: 2px;
+    }
+
+    .rc-rate.hot { color: var(--up); }
+    .rc-rate.warm { color: var(--new); }
+    .rc-rate.cool { color: var(--down); }
+
+    .rc-bar-bg {
+      height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px;
+    }
+
+    .rc-bar-fill {
+      height: 100%; border-radius: 2px;
+    }
+
+    .rc-bar-fill.hot { background: linear-gradient(90deg,#ff9090,var(--up)); }
+    .rc-bar-fill.warm { background: linear-gradient(90deg,#f5c570,var(--new)); }
+    .rc-bar-fill.cool { background: linear-gradient(90deg,#7dcfef,var(--down)); }
+
+    .rc-meta { font-size: 11px; color: var(--text3); }
+    .rc-price { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 600; }
+
+    .error-banner {
+      background: rgba(255,87,87,0.1); border: 1px solid rgba(255,87,87,0.3);
+      border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+      font-size: 13px; color: var(--up);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .ipo-table th:nth-child(n+5),
+      .ipo-table td:nth-child(n+5) { display: none; }
+    }
+
+    @media (max-width: 600px) {
+      .ipo-table th:nth-child(n+4),
+      .ipo-table td:nth-child(n+4) { display: none; }
+      .summary-inner { gap: 12px; }
+      .summary-value { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">📈</div>
+      공모주 청약 현황
+    </div>
+    <div class="header-right">
+      <span class="live-dot">실시간</span>
+      <span class="source-badge">출처: 38커뮤니케이션</span>
+      <span class="update-time" id="updateTime">로딩 중...</span>
+    </div>
+  </div>
+</header>
+
+<div class="summary-bar">
+  <div class="summary-inner">
+    <div class="summary-card">
+      <span class="summary-label">진행중</span>
+      <span class="summary-value ongoing" id="sumOngoing">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-card">
+      <span class="summary-label">신규·예정</span>
+      <span class="summary-value new-clr" id="sumNew">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-card">
+      <span class="summary-label">최고 청약률</span>
+      <span class="summary-value up" id="sumTop">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-card">
+      <span class="summary-label">평균 청약률</span>
+      <span class="summary-value" style="color:var(--text2)" id="sumAvg">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-card">
+      <span class="summary-label">마감 (최근)</span>
+      <span class="summary-value" style="color:var(--text)" id="sumClosed">—</span>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab t-ongoing active" onclick="switchTab('ongoing')">
+      진행중 <span class="cnt" id="cnt-ongoing">—</span>
+    </button>
+    <button class="tab t-new" onclick="switchTab('new')">
+      신규·예정 <span class="cnt" id="cnt-new">—</span>
+    </button>
+    <button class="tab t-closed" onclick="switchTab('closed')">
+      마감 <span class="cnt" id="cnt-closed">—</span>
+    </button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-left">
+    <div class="search-box">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="종목·주간사 검색..." oninput="applyFilters()" />
+    </div>
+    <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+      <option value="rate">청약률 순</option>
+      <option value="date_asc">마감일 빠른 순</option>
+      <option value="date_desc">마감일 느린 순</option>
+      <option value="name">종목명 순</option>
+    </select>
+  </div>
+  <div class="filter-right" id="resultCount"></div>
+</div>
+
+<div class="table-wrap" id="errorBanner"></div>
+
+<div class="table-wrap">
+  <div class="tab-panel active" id="panel-ongoing">
+    <div class="loading-wrap"><div class="spinner"></div><p class="loading-text">데이터 불러오는 중...</p></div>
+  </div>
+  <div class="tab-panel" id="panel-new">
+    <div class="loading-wrap"><div class="spinner"></div><p class="loading-text">데이터 불러오는 중...</p></div>
+  </div>
+  <div class="tab-panel" id="panel-closed">
+    <div class="loading-wrap"><div class="spinner"></div><p class="loading-text">데이터 불러오는 중...</p></div>
+  </div>
+</div>
+
+<script>
+const API = '/api/ipos';
+const REFRESH_MS = 3 * 60 * 1000; // 3분
+
+let allData = { ongoing: [], new: [], closed: [] };
+let currentTab = 'ongoing';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [, m, d] = iso.split('-');
+  return `${+m}/${+d}`;
+}
+
+function dday(endIso) {
+  if (!endIso) return null;
+  const diff = Math.ceil((new Date(endIso) - new Date(today())) / 86400000);
+  if (diff === 0) return { label: 'D-Day', cls: 'today' };
+  if (diff > 0)  return { label: `D-${diff}`, cls: 'soon' };
+  return null;
+}
+
+function rateClass(rate) {
+  if (!rate) return 'na';
+  if (rate >= 500) return 'hot';
+  if (rate >= 100) return 'warm';
+  return 'cool';
+}
+
+function barWidth(rate) {
+  if (!rate) return 0;
+  return Math.min(100, (Math.log10(rate + 1) / Math.log10(4001)) * 100);
+}
+
+function abbr(name) {
+  return name.replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function statusBadge(s) {
+  const m = { ongoing: ['진행중', 'ongoing'], new: ['예정', 'new'], closed: ['마감', 'closed'] };
+  const [label, cls] = m[s] || ['—', 'closed'];
+  return `<span class="status-badge ${cls}">${escHtml(label)}</span>`;
+}
+
+function exchangeBadge(market) {
+  return market === 'kospi'
+    ? `<span class="exchange kospi">KOSPI</span>`
+    : `<span class="exchange kosdaq">KOSDAQ</span>`;
+}
+
+function rateCell(rate, endIso, showDday) {
+  const rc = rateClass(rate);
+  const bw = barWidth(rate);
+  const rateLabel = rate ? `${rate.toLocaleString()}:1` : '청약 전';
+  const ddayEl = showDday && endIso ? (() => {
+    const dd = dday(endIso);
+    return dd ? `<span class="dday ${dd.cls}">${dd.label}</span>` : '';
+  })() : '';
+
+  return `<td class="rate-cell">
+    <div class="rate-header">
+      <span class="rate-value ${rc}">${escHtml(rateLabel)}</span>
+      ${ddayEl}
+    </div>
+    <div class="rate-bar-bg"><div class="rate-bar-fill ${rc}" style="width:${bw}%"></div></div>
+  </td>`;
+}
+
+function buildOngoingEmpty() {
+  const next = allData.new[0]; // 가장 가까운 예정 종목
+  const top5 = [...allData.closed].sort((a, b) => (b.rate||0)-(a.rate||0)).slice(0, 5);
+
+  // 카운트다운 HTML
+  let countdownHtml = '';
+  if (next) {
+    const startMs = new Date(next.date_start + 'T09:00:00');
+    countdownHtml = `
+    <div class="countdown-banner">
+      <div class="countdown-glow"></div>
+      <div class="countdown-left">
+        <div class="countdown-eyebrow">다음 청약 예정</div>
+        <div class="countdown-name">${escHtml(next.name)}</div>
+        <div class="countdown-meta">
+          <span>${exchangeBadge(next.market)}</span>
+          <span>📅 ${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</span>
+          ${next.price_range ? `<span>💰 ${escHtml(next.price_range)}</span>` : ''}
+          ${next.underwriter ? `<span>🏦 ${escHtml(next.underwriter)}</span>` : ''}
+        </div>
+      </div>
+      <div class="countdown-right" id="cdBoxes">
+        <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
+      </div>
+    </div>`;
+
+    // 카운트다운 타이머 시작 (다음 틱에)
+    setTimeout(() => startCountdown(startMs), 0);
+  }
+
+  // 최근 마감 카드 HTML
+  let cardsHtml = '';
+  if (top5.length) {
+    cardsHtml = `
+    <div class="recent-section-title">최근 마감 인기 종목</div>
+    <div class="recent-cards">
+      ${top5.map(d => {
+        const rc = rateClass(d.rate);
+        const bw = barWidth(d.rate);
+        return `<div class="recent-card">
+          <div class="rc-header">
+            <div class="rc-name">${escHtml(d.name)}</div>
+            ${exchangeBadge(d.market)}
+          </div>
+          <div class="rc-rate ${rc}">${d.rate ? d.rate.toLocaleString()+':1' : '—'}</div>
+          <div class="rc-bar-bg"><div class="rc-bar-fill ${rc}" style="width:${bw}%"></div></div>
+          <div class="rc-meta">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+          <div class="rc-price">${d.price ? d.price.toLocaleString()+'원' : '—'} · ${escHtml(d.underwriter||'—')}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return `<tr><td colspan="6">
+    <div class="no-ongoing">
+      ${countdownHtml}
+      ${cardsHtml}
+    </div>
+  </td></tr>`;
+}
+
+let cdTimer = null;
+
+function startCountdown(targetMs) {
+  if (cdTimer) clearInterval(cdTimer);
+  function tick() {
+    const diff = targetMs - Date.now();
+    if (diff <= 0) { clearInterval(cdTimer); return; }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const el = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = String(v).padStart(2,'0'); };
+    el('cd-d', d); el('cd-h', h); el('cd-m', m); el('cd-s', s);
+  }
+  tick();
+  cdTimer = setInterval(tick, 1000);
+}
+
+function buildOngoingRows(data) {
+  if (!data.length) return buildOngoingEmpty();
+  return data.map(d => `<tr>
+    <td>
+      <div class="company-cell">
+        <div class="company-logo">${escHtml(abbr(d.name))}</div>
+        <div>
+          <div class="company-name">${escHtml(d.name)}</div>
+          <div class="company-sector">${exchangeBadge(d.market)}</div>
+        </div>
+      </div>
+    </td>
+    <td>${statusBadge(d.status)}</td>
+    ${rateCell(d.rate, d.date_end, true)}
+    <td class="right">
+      <div class="offer-price">${d.price ? d.price.toLocaleString()+'원' : '미정'}</div>
+      <div class="price-range">${escHtml(d.price_range || '—')}</div>
+    </td>
+    <td>
+      <div class="date-range">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+      <div class="date-sub">마감 ${escHtml(d.date_end || '—')}</div>
+    </td>
+    <td><span class="underwriter">${escHtml(d.underwriter || '—')}</span></td>
+  </tr>`).join('');
+}
+
+function buildNewRows(data) {
+  if (!data.length) return emptyRow('예정된 공모주가 없습니다');
+  return data.map(d => {
+    const dd = d.date_start ? dday(d.date_start) : null;
+    return `<tr>
+      <td>
+        <div class="company-cell">
+          <div class="company-logo">${escHtml(abbr(d.name))}</div>
+          <div>
+            <div class="company-name">${escHtml(d.name)}</div>
+            <div class="company-sector">${exchangeBadge(d.market)}</div>
+          </div>
+        </div>
+      </td>
+      <td>${statusBadge(d.status)}</td>
+      <td>
+        <div class="offer-price">${escHtml(d.price_range || '미정')}</div>
+        <div class="price-range">희망 밴드</div>
+      </td>
+      <td>
+        <div class="date-range">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+        <div class="date-sub">${dd ? `<span class="dday ${dd.cls}">${dd.label}</span> 청약 시작` : ''}</div>
+      </td>
+      <td><span class="underwriter">${escHtml(d.underwriter || '—')}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function buildClosedRows(data) {
+  if (!data.length) return emptyRow('마감된 공모주가 없습니다');
+  return data.map(d => `<tr>
+    <td>
+      <div class="company-cell">
+        <div class="company-logo">${escHtml(abbr(d.name))}</div>
+        <div>
+          <div class="company-name">${escHtml(d.name)}</div>
+          <div class="company-sector">${exchangeBadge(d.market)}</div>
+        </div>
+      </div>
+    </td>
+    <td>${statusBadge(d.status)}</td>
+    ${rateCell(d.rate, d.date_end, false)}
+    <td class="right">
+      <div class="offer-price">${d.price ? d.price.toLocaleString()+'원' : '—'}</div>
+      <div class="price-range">${escHtml(d.price_range || '—')}</div>
+    </td>
+    <td>
+      <div class="date-range">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+      <div class="date-sub">청약 종료</div>
+    </td>
+    <td><span class="underwriter">${escHtml(d.underwriter || '—')}</span></td>
+  </tr>`).join('');
+}
+
+function emptyRow(msg) {
+  return `<tr><td colspan="6">
+    <div class="empty-state">
+      <div class="icon">🔍</div><p>${escHtml(msg)}</p>
+    </div>
+  </td></tr>`;
+}
+
+function tableShell(thList, tbodyId) {
+  return `<table class="ipo-table">
+    <thead><tr>${thList.map(t => `<th${t.right?' class="right"':''}>${t.label}</th>`).join('')}</tr></thead>
+    <tbody id="${tbodyId}"></tbody>
+  </table>`;
+}
+
+// ── Filter / Sort ─────────────────────────────────────────────────────────────
+
+function filtered(dataset) {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+
+  let data = [...dataset];
+  if (q) {
+    data = data.filter(d =>
+      d.name.toLowerCase().includes(q) ||
+      (d.underwriter || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (sort === 'rate') data.sort((a, b) => (b.rate || 0) - (a.rate || 0));
+  else if (sort === 'date_asc') data.sort((a, b) => (a.date_end || '').localeCompare(b.date_end || ''));
+  else if (sort === 'date_desc') data.sort((a, b) => (b.date_end || '').localeCompare(a.date_end || ''));
+  else data.sort((a, b) => a.name.localeCompare(b.name));
+
+  return data;
+}
+
+// ── Render all panels ─────────────────────────────────────────────────────────
+
+function render() {
+  const og = filtered(allData.ongoing);
+  const nw = filtered(allData.new);
+  const cl = filtered(allData.closed);
+
+  // Panels
+  const ongoingThs = [
+    {label:'종목명'},{label:'상태'},{label:'청약률'},
+    {label:'공모가',right:true},{label:'청약 일정'},{label:'주간사'}
+  ];
+  const newThs = [
+    {label:'종목명'},{label:'상태'},{label:'희망공모가'},
+    {label:'청약 일정'},{label:'주간사'}
+  ];
+  const closedThs = [
+    {label:'종목명'},{label:'상태'},{label:'최종 청약률'},
+    {label:'공모가',right:true},{label:'청약 일정'},{label:'주간사'}
+  ];
+
+  const panelOg = document.getElementById('panel-ongoing');
+  if (!panelOg.querySelector('table')) panelOg.innerHTML = tableShell(ongoingThs, 'tbody-ongoing');
+  document.getElementById('tbody-ongoing').innerHTML = buildOngoingRows(og);
+
+  const panelNw = document.getElementById('panel-new');
+  if (!panelNw.querySelector('table')) panelNw.innerHTML = tableShell(newThs, 'tbody-new');
+  document.getElementById('tbody-new').innerHTML = buildNewRows(nw);
+
+  const panelCl = document.getElementById('panel-closed');
+  if (!panelCl.querySelector('table')) panelCl.innerHTML = tableShell(closedThs, 'tbody-closed');
+  document.getElementById('tbody-closed').innerHTML = buildClosedRows(cl);
+
+  // Counts
+  document.getElementById('cnt-ongoing').textContent = allData.ongoing.length;
+  document.getElementById('cnt-new').textContent = allData.new.length;
+  document.getElementById('cnt-closed').textContent = allData.closed.length;
+
+  // Summary stats
+  const rates = [...allData.ongoing, ...allData.closed].filter(d => d.rate).map(d => d.rate);
+  document.getElementById('sumOngoing').textContent = allData.ongoing.length;
+  document.getElementById('sumNew').textContent = allData.new.length;
+  document.getElementById('sumClosed').textContent = allData.closed.length;
+  if (rates.length) {
+    const top = Math.max(...rates);
+    const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+    document.getElementById('sumTop').textContent = top.toLocaleString() + ':1';
+    document.getElementById('sumAvg').textContent = avg.toFixed(0) + ':1';
+  }
+
+  const currentCount = currentTab === 'ongoing' ? og.length : currentTab === 'new' ? nw.length : cl.length;
+  document.getElementById('resultCount').textContent = `${currentCount}개 종목`;
+}
+
+// ── Data fetch ────────────────────────────────────────────────────────────────
+
+async function fetchData() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allData.ongoing = data.ongoing || [];
+    allData.new = data.new || [];
+    allData.closed = data.closed || [];
+
+    document.getElementById('updateTime').textContent =
+      `업데이트: ${data.updated_at ? data.updated_at.slice(11,19) : '—'}`;
+    document.getElementById('errorBanner').innerHTML = '';
+    render();
+  } catch (e) {
+    document.getElementById('updateTime').textContent = '업데이트 실패';
+    document.getElementById('errorBanner').innerHTML =
+      `<div class="error-banner">⚠️ 데이터를 불러오지 못했습니다: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function applyFilters() { render(); }
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.t-${tab}`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  render();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+fetchData();
+setInterval(fetchData, REFRESH_MS);
+</script>
+</body>
+</html>
