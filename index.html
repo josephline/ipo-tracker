@@ -443,6 +443,141 @@
     .rc-meta { font-size: 11px; color: var(--text3); }
     .rc-price { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 600; }
 
+    /* ── 상세 모달 ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%; max-width: 600px;
+      max-height: 90vh; overflow-y: auto;
+      animation: slideUp 0.2s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+
+    @keyframes slideUp { from { transform:translateY(16px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px;
+      position: sticky; top: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      z-index: 1;
+    }
+
+    .modal-title-wrap { flex: 1; min-width: 0; }
+
+    .modal-name {
+      font-size: 20px; font-weight: 800; margin-bottom: 6px;
+    }
+
+    .modal-meta {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s;
+    }
+
+    .modal-close:hover { background: var(--border); }
+
+    .modal-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* 섹션 */
+    .modal-section { }
+
+    .modal-section-title {
+      font-size: 11px; font-weight: 700; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .modal-section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* 요약 스탯 그리드 */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+
+    .stat-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px;
+    }
+
+    .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+    .stat-value { font-size: 16px; font-weight: 700; }
+    .stat-value.up { color: var(--up); }
+    .stat-value.primary { color: var(--primary-light); }
+    .stat-value.new-c { color: var(--new); }
+
+    /* 증권사 테이블 */
+    .broker-table { width: 100%; border-collapse: collapse; }
+    .broker-table th {
+      padding: 8px 12px; font-size: 11px; font-weight: 600;
+      color: var(--text3); text-align: left; border-bottom: 1px solid var(--border);
+      letter-spacing: 0.04em;
+    }
+    .broker-table th.right { text-align: right; }
+    .broker-table td {
+      padding: 10px 12px; font-size: 13px;
+      border-bottom: 1px solid rgba(46,49,72,0.5);
+    }
+    .broker-table tr:last-child td { border-bottom: none; }
+    .broker-table .broker-name { font-weight: 600; }
+    .broker-table .broker-shares { color: var(--text2); text-align: right; }
+    .broker-table .broker-limit { color: var(--text2); text-align: right; }
+
+    .role-badge {
+      font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 600;
+    }
+    .role-badge.lead { background: rgba(91,106,240,0.15); color: var(--primary-light); }
+    .role-badge.co   { background: rgba(80,201,110,0.12); color: var(--ongoing); }
+
+    /* 일정 리스트 */
+    .schedule-list { display: flex; flex-direction: column; gap: 6px; }
+    .schedule-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; background: var(--surface2); border-radius: 8px;
+      font-size: 13px;
+    }
+    .schedule-key { color: var(--text3); }
+    .schedule-val { font-weight: 600; color: var(--text); }
+    .schedule-val.highlight { color: var(--primary-light); }
+
+    /* 모달 로딩 */
+    .modal-loading {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; padding: 40px; color: var(--text3); font-size: 13px;
+    }
+
+    /* 클릭 가능한 행 표시 */
+    .ipo-table tbody tr { cursor: pointer; }
+    .ipo-table tbody tr:hover td:first-child .company-name {
+      color: var(--primary-light);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     /* 라인블록 배지 */
     .lineblock-badge {
       display: flex; align-items: center; gap: 6px;
@@ -754,7 +889,7 @@ function startCountdown(targetMs) {
 
 function buildOngoingRows(data) {
   if (!data.length) return buildOngoingEmpty();
-  return data.map(d => `<tr>
+  return data.map(d => `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
     <td>
       <div class="company-cell">
         <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -782,7 +917,7 @@ function buildNewRows(data) {
   if (!data.length) return emptyRow('예정된 공모주가 없습니다');
   return data.map(d => {
     const dd = d.date_start ? dday(d.date_start) : null;
-    return `<tr>
+    return `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
       <td>
         <div class="company-cell">
           <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -808,7 +943,7 @@ function buildNewRows(data) {
 
 function buildClosedRows(data) {
   if (!data.length) return emptyRow('마감된 공모주가 없습니다');
-  return data.map(d => `<tr>
+  return data.map(d => `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
     <td>
       <div class="company-cell">
         <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -956,11 +1091,202 @@ function switchTab(tab) {
   render();
 }
 
+// ── 모달 ──────────────────────────────────────────────────────────────────────
+
+function openModal(ipo) {
+  const overlay = document.getElementById('modalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // 헤더 세팅
+  document.getElementById('modalName').textContent = ipo.name;
+  document.getElementById('modalMeta').innerHTML = `
+    ${statusBadge(ipo.status)}
+    ${exchangeBadge(ipo.market)}
+    ${ipo.underwriter ? `<span style="font-size:12px;color:var(--text3)">${escHtml(ipo.underwriter)}</span>` : ''}
+  `;
+
+  // 기본 정보로 빠르게 먼저 렌더
+  renderModalBasic(ipo);
+
+  // 상세 데이터 fetch (no 있을 때만)
+  if (ipo.no) fetchDetail(ipo);
+}
+
+function renderModalBasic(ipo) {
+  const rc = rateClass(ipo.rate);
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-section">
+      <div class="modal-section-title">청약 요약</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">청약 경쟁률</div>
+          <div class="stat-value ${rc}">${ipo.rate ? ipo.rate.toLocaleString()+':1' : '청약 전'}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">확정 공모가</div>
+          <div class="stat-value">${ipo.price ? ipo.price.toLocaleString()+'원' : '미확정'}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">희망 공모가</div>
+          <div class="stat-value primary" style="font-size:13px">${escHtml(ipo.price_range||'—')}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">청약 일정</div>
+          <div class="stat-value" style="font-size:13px">${fmtDate(ipo.date_start)} ~ ${fmtDate(ipo.date_end)}</div>
+        </div>
+        <div class="stat-box" style="grid-column:span 2">
+          <div class="stat-label">주간사</div>
+          <div class="stat-value" style="font-size:13px">${escHtml(ipo.underwriter||'—')}</div>
+        </div>
+      </div>
+    </div>
+    ${ipo.no ? '<div class="modal-loading"><div class="spinner"></div>증권사별 상세 정보 불러오는 중...</div>' : ''}
+  `;
+}
+
+async function fetchDetail(ipo) {
+  try {
+    const res = await fetch(`/api/ipos/${ipo.no}/detail`);
+    const detail = await res.json();
+    renderModalDetail(ipo, detail);
+  } catch(e) {
+    // 상세 실패해도 기본 정보는 유지
+  }
+}
+
+function renderModalDetail(ipo, d) {
+  const rc = rateClass(ipo.rate);
+
+  // 증권사 테이블
+  let brokerHtml = '';
+  if (d.brokers && d.brokers.length) {
+    const rows = d.brokers.map(b => {
+      const roleLabel = b.role && b.role.includes('대표')
+        ? `<span class="role-badge lead">${escHtml(b.role)}</span>`
+        : b.role ? `<span class="role-badge co">${escHtml(b.role)}</span>` : '';
+      return `<tr>
+        <td class="broker-name">${escHtml(b.name)} ${roleLabel}</td>
+        <td class="broker-shares">${escHtml(b.shares||'—')}</td>
+        <td class="broker-limit">${escHtml(b.limit||'—')}</td>
+      </tr>`;
+    }).join('');
+    brokerHtml = `
+      <div class="modal-section">
+        <div class="modal-section-title">증권사별 청약 정보</div>
+        <table class="broker-table">
+          <thead><tr>
+            <th>증권사</th>
+            <th class="right">배정 주식수</th>
+            <th class="right">청약 한도</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // 일정
+  let scheduleHtml = '';
+  const sched = d.schedule || {};
+  const schedItems = [
+    ['수요예측일', sched['수요예측일']],
+    ['공모청약일', sched['청약일']],
+    ['납입일',     sched['납입일']],
+    ['상장일',     sched['상장일'] || d.listing_date],
+  ].filter(([,v]) => v);
+
+  if (schedItems.length) {
+    scheduleHtml = `
+      <div class="modal-section">
+        <div class="modal-section-title">주요 일정</div>
+        <div class="schedule-list">
+          ${schedItems.map(([k,v]) =>
+            `<div class="schedule-row">
+              <span class="schedule-key">${escHtml(k)}</span>
+              <span class="schedule-val ${k==='상장일'?'highlight':''}">${escHtml(v)}</span>
+            </div>`
+          ).join('')}
+        </div>
+      </div>`;
+  }
+
+  // 기관 수요예측
+  let instHtml = '';
+  if (d.institutional || d.lockup || d.current_price) {
+    instHtml = `
+      <div class="modal-section">
+        <div class="modal-section-title">기관 수요예측</div>
+        <div class="stat-grid">
+          ${d.institutional ? `<div class="stat-box"><div class="stat-label">기관 경쟁률</div><div class="stat-value up">${escHtml(d.institutional)}</div></div>` : ''}
+          ${d.lockup ? `<div class="stat-box"><div class="stat-label">의무보유확약</div><div class="stat-value primary">${escHtml(d.lockup)}</div></div>` : ''}
+          ${d.current_price ? `<div class="stat-box"><div class="stat-label">현재가 (상장 후)</div><div class="stat-value new-c">${parseInt(d.current_price).toLocaleString()}원</div></div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-section">
+      <div class="modal-section-title">청약 요약</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">청약 경쟁률</div>
+          <div class="stat-value ${rc}">${ipo.rate ? ipo.rate.toLocaleString()+':1' : '청약 전'}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">확정 공모가</div>
+          <div class="stat-value">${ipo.price ? ipo.price.toLocaleString()+'원' : '미확정'}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">희망 공모가</div>
+          <div class="stat-value primary" style="font-size:13px">${escHtml(ipo.price_range||'—')}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">청약 일정</div>
+          <div class="stat-value" style="font-size:13px">${fmtDate(ipo.date_start)} ~ ${fmtDate(ipo.date_end)}</div>
+        </div>
+        ${d.total_shares ? `<div class="stat-box"><div class="stat-label">총 공모주식수</div><div class="stat-value" style="font-size:13px">${escHtml(d.total_shares)}주</div></div>` : ''}
+        ${d.public_amount ? `<div class="stat-box"><div class="stat-label">공모금액</div><div class="stat-value" style="font-size:13px">${escHtml(d.public_amount)}백만원</div></div>` : ''}
+      </div>
+    </div>
+    ${brokerHtml}
+    ${instHtml}
+    ${scheduleHtml}
+  `;
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ESC 키로 닫기
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 fetchData();
 setInterval(fetchData, REFRESH_MS);
 </script>
+
+<!-- 상세 모달 -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModalOnOverlay(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-name" id="modalName">—</div>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-loading"><div class="spinner"></div>상세 정보 불러오는 중...</div>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="footer-inner">
