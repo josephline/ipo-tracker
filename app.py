@@ -396,6 +396,15 @@ def robots():
     )
 
 
+@app.route('/ads.txt')
+def ads_txt():
+    from flask import Response
+    return Response(
+        open('ads.txt', 'r', encoding='utf-8').read(),
+        mimetype='text/plain'
+    )
+
+
 @app.route('/favicon.ico')
 def favicon():
     return app.send_static_file('favicon.ico')
