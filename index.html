@@ -752,6 +752,235 @@
     }
     .footer-text { font-size: 12px; color: var(--text3); }
 
+    /* ── 진행중 카드 ── */
+    .ongoing-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      padding: 16px 0;
+    }
+
+    .ipo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+    }
+    .ipo-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--card-accent, var(--primary)), var(--primary-light));
+    }
+    .ipo-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      border-color: var(--primary);
+    }
+
+    .icard-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px 12px;
+    }
+    .icard-logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+    }
+    .icard-info { flex: 1; min-width: 0; }
+    .icard-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .icard-badges { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); }
+    .icard-dday {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      background: rgba(91,106,240,0.15);
+      color: var(--primary-light);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .icard-dday.urgent {
+      background: rgba(255,87,87,0.15);
+      color: var(--up);
+      animation: pulse-badge 1.5s infinite;
+    }
+    @keyframes pulse-badge {
+      0%,100% { opacity:1; } 50% { opacity:0.6; }
+    }
+
+    .icard-rate-section {
+      padding: 12px 18px 14px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .icard-rate-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .icard-rate-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .icard-live-dot {
+      width: 6px; height: 6px;
+      background: var(--ongoing);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    .icard-rate-value {
+      font-size: 30px; font-weight: 900;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .icard-rate-value.up   { color: var(--up); }
+    .icard-rate-value.down { color: var(--down); }
+    .icard-rate-value.primary { color: var(--primary-light); }
+
+    .icard-bar-wrap { margin-bottom: 4px; }
+    .icard-bar-bg {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .icard-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    .icard-bar-fill.up      { background: linear-gradient(90deg, var(--up), #ff8a8a); }
+    .icard-bar-fill.primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
+    .icard-bar-fill.down    { background: linear-gradient(90deg, var(--down), #6bcfff); }
+    .icard-rate-end { font-size: 11px; color: var(--text3); }
+
+    .icard-footer {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      padding: 14px 18px;
+      gap: 0;
+    }
+    .icard-stat { text-align: center; padding: 0 6px; }
+    .icard-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .icard-stat-value { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .icard-stat-value.green { color: var(--ongoing); }
+    .icard-stat-sub { font-size: 10px; color: var(--text3); }
+    .icard-vdivider { background: var(--border); width: 1px; }
+
+    /* ── 하단 상시 노출 섹션 ── */
+    .bottom-sections {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+    .bottom-section-block {
+      margin-top: 40px;
+    }
+    .bottom-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bottom-section-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-live-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ongoing);
+      background: rgba(80,201,110,0.12);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* 테이블 행 최소 증거금 */
+    .min-deposit {
+      font-size: 11px;
+      color: var(--ongoing);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    /* 모달 최소 증거금 박스 */
+    .min-deposit-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--ongoing);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 16px;
+    }
+    .min-deposit-main {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .min-deposit-label { font-size: 12px; color: var(--text2); }
+    .min-deposit-value { font-size: 22px; font-weight: 800; color: var(--ongoing); }
+    .min-deposit-detail { font-size: 12px; color: var(--text3); }
+    .min-deposit-scale {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .scale-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 72px;
+    }
+    .scale-n { font-size: 11px; color: var(--text3); }
+    .scale-v { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    /* 모달 균등 배정 */
+    .alloc-info {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-radius: 6px;
+    }
+    .alloc-list { display: flex; flex-direction: column; gap: 6px; }
+    .alloc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .alloc-label { color: var(--text2); }
+    .alloc-value { color: var(--text); }
+    .alloc-value b { color: var(--primary-light); }
+    .alloc-note {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 8px;
+      text-align: right;
+    }
+
     .error-banner {
       background: rgba(255,87,87,0.1); border: 1px solid rgba(255,87,87,0.3);
       border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
@@ -878,9 +1107,58 @@
   </div>
 </div>
 
+<!-- 항상 노출 하단 섹션 -->
+<div class="bottom-sections">
+  <div class="bottom-section-block" id="recentClosedBlock">
+    <div class="bottom-section-header">
+      <h2>최근 마감 인기 종목</h2>
+    </div>
+    <div class="recent-cards" id="recentCards">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="bottom-section-block" id="returnsBlock">
+    <div class="bottom-section-header">
+      <h2>공모가 대비 수익률</h2>
+      <span class="section-live-tag">실시간</span>
+    </div>
+    <div class="returns-cards" id="returnsCards">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
 <script>
-const API = '/api/ipos';
+const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const API = IS_LOCAL ? '/api/ipos?mock=1' : '/api/ipos';
 const REFRESH_MS = 3 * 60 * 1000; // 3분
+
+// ── 최소 청약 증거금 계산 ────────────────────────────────────────────────────
+
+function minDepositAmt(ipo) {
+  // 확정 공모가 우선, 없으면 희망밴드 상단
+  let price = ipo.price;
+  if (!price && ipo.price_range) {
+    const m = ipo.price_range.replace(/,/g, '').match(/(\d+)\s*$/);
+    if (m) price = parseInt(m[1]);
+  }
+  if (!price) return null;
+  return price * 10 * 0.5; // 10주 × 50% 증거금
+}
+
+function fmtMoney(n) {
+  if (n === null || n === undefined) return null;
+  if (n >= 10000000) return (n / 10000000).toFixed(0) + '천만원';
+  if (n >= 100000)   return Math.round(n / 10000) + '만원';
+  return n.toLocaleString() + '원';
+}
+
+function minDepositLabel(ipo) {
+  const amt = minDepositAmt(ipo);
+  if (!amt) return null;
+  const base = ipo.price ? '' : '(희망밴드 상단 기준)';
+  return fmtMoney(amt) + (base ? `<span style="font-size:10px;color:var(--text3)"> ${base}</span>` : '');
+}
 
 let allData = { ongoing: [], new: [], closed: [] };
 let currentTab = 'ongoing';
@@ -959,84 +1237,136 @@ function rateCell(rate, endIso, showDday) {
 }
 
 function buildOngoingEmpty() {
-  const next = allData.new[0]; // 가장 가까운 예정 종목
-  const top5 = [...allData.closed].sort((a, b) => (b.rate||0)-(a.rate||0)).slice(0, 5);
-
-  // 카운트다운 HTML
-  let countdownHtml = '';
-  if (next) {
-    const startMs = new Date(next.date_start + 'T09:00:00');
-    countdownHtml = `
-    <div class="countdown-banner">
-      <div class="countdown-glow"></div>
-      <div class="countdown-left">
-        <div class="countdown-eyebrow">다음 청약 예정</div>
-        <div class="countdown-name">${escHtml(next.name)}</div>
-        <div class="countdown-meta">
-          <span>${exchangeBadge(next.market)}</span>
-          <span>📅 ${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</span>
-          ${next.price_range ? `<span>💰 ${escHtml(next.price_range)}</span>` : ''}
-          ${next.underwriter ? `<span>🏦 ${escHtml(next.underwriter)}</span>` : ''}
+  const next = allData.new[0];
+  if (!next) {
+    return `<div class="no-ongoing" style="text-align:center;padding:48px 0;color:var(--text3);font-size:14px">현재 진행 중인 공모주가 없습니다.</div>`;
+  }
+  const startMs = new Date(next.date_start + 'T09:00:00');
+  setTimeout(() => startCountdown(startMs), 0);
+  return `
+    <div class="no-ongoing">
+      <div class="countdown-banner">
+        <div class="countdown-glow"></div>
+        <div class="countdown-left">
+          <div class="countdown-eyebrow">다음 청약 예정</div>
+          <div class="countdown-name">${escHtml(next.name)}</div>
+          <div class="countdown-meta">
+            <span>${exchangeBadge(next.market)}</span>
+            <span>📅 ${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</span>
+            ${next.price_range ? `<span>💰 ${escHtml(next.price_range)}</span>` : ''}
+            ${next.underwriter ? `<span>🏦 ${escHtml(next.underwriter)}</span>` : ''}
+          </div>
+        </div>
+        <div class="countdown-right" id="cdBoxes">
+          <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
         </div>
       </div>
-      <div class="countdown-right" id="cdBoxes">
-        <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
-        <div class="cd-sep">:</div>
-        <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
-      </div>
     </div>`;
+}
 
-    // 카운트다운 타이머 시작 (다음 틱에)
-    setTimeout(() => startCountdown(startMs), 0);
-  }
+function buildOngoingCards(data) {
+  if (!data.length) return buildOngoingEmpty();
 
-  // 최근 마감 카드 HTML
-  let cardsHtml = '';
-  if (top5.length) {
-    cardsHtml = `
-    <div class="recent-section-title">최근 마감 인기 종목</div>
-    <div class="recent-cards">
-      ${top5.map(d => {
-        const rc = rateClass(d.rate);
-        const bw = barWidth(d.rate);
-        return `<div class="recent-card" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
-          <div class="rc-header">
-            <div class="rc-name">${escHtml(d.name)}</div>
-            ${exchangeBadge(d.market)}
+  return `<div class="ongoing-cards">
+    ${data.map(d => {
+      const rc = rateClass(d.rate);
+      const bw = barWidth(d.rate);
+      const dep = minDepositAmt(d);
+      const dd = d.date_end ? dday(d.date_end) : null;
+      const ddLabel = dd ? dd.label : '';
+      const ddUrgent = d.date_end && dday(d.date_end)?.n <= 1 ? ' urgent' : '';
+
+      const accentMap = { up: 'var(--up)', primary: 'var(--primary)', down: 'var(--down)' };
+      const accent = accentMap[rc] || 'var(--primary)';
+
+      return `<div class="ipo-card" style="--card-accent:${accent}" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+        <div class="icard-header">
+          <div class="icard-logo">${escHtml(abbr(d.name))}</div>
+          <div class="icard-info">
+            <div class="icard-name">${escHtml(d.name)}</div>
+            <div class="icard-badges">
+              ${exchangeBadge(d.market)}
+              ${d.underwriter ? `<span>${escHtml(d.underwriter)}</span>` : ''}
+            </div>
           </div>
-          <div class="rc-rate ${rc}">${d.rate ? d.rate.toLocaleString()+':1' : '—'}</div>
-          <div class="rc-bar-bg"><div class="rc-bar-fill ${rc}" style="width:${bw}%"></div></div>
-          <div class="rc-meta">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
-          <div class="rc-price">${d.price ? d.price.toLocaleString()+'원' : '—'} · ${escHtml(d.underwriter||'—')}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-  }
+          ${ddLabel ? `<div class="icard-dday${ddUrgent}">${escHtml(ddLabel)}</div>` : ''}
+        </div>
 
-  // 수익률 섹션 (카드가 있을 때만)
-  const returnsHtml = top5.length ? `
-    <div class="returns-section">
-      <div class="recent-section-title">공모가 대비 수익률</div>
-      <div class="returns-cards" id="returnsCards">
-        <!-- JS로 채워짐 -->
-      </div>
-    </div>` : '';
+        <div class="icard-rate-section">
+          <div class="icard-rate-header">
+            <span class="icard-rate-label">
+              <span class="icard-live-dot"></span>
+              실시간 청약 경쟁률
+            </span>
+          </div>
+          <div class="icard-rate-value ${rc}">
+            ${d.rate ? d.rate.toLocaleString() + ':1' : '집계 중...'}
+          </div>
+          <div class="icard-bar-wrap">
+            <div class="icard-bar-bg">
+              <div class="icard-bar-fill ${rc}" style="width:${bw}%"></div>
+            </div>
+          </div>
+          <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')}</div>
+        </div>
 
-  return `<tr><td colspan="6">
-    <div class="no-ongoing">
-      ${countdownHtml}
-      ${cardsHtml}
-      ${returnsHtml}
-    </div>
-  </td></tr>`;
+        <div class="icard-footer">
+          <div class="icard-stat">
+            <div class="icard-stat-label">공모가</div>
+            <div class="icard-stat-value">${d.price ? d.price.toLocaleString()+'원' : '미확정'}</div>
+            <div class="icard-stat-sub">${escHtml(d.price_range || '—')}</div>
+          </div>
+          <div class="icard-vdivider"></div>
+          <div class="icard-stat">
+            <div class="icard-stat-label">최소 증거금</div>
+            <div class="icard-stat-value green">${dep ? fmtMoney(dep) : '—'}</div>
+            <div class="icard-stat-sub">10주 · 50%</div>
+          </div>
+          <div class="icard-vdivider"></div>
+          <div class="icard-stat">
+            <div class="icard-stat-label">청약 기간</div>
+            <div class="icard-stat-value" style="font-size:12px">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+            <div class="icard-stat-sub">${escHtml(d.underwriter || '—')}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 let cdTimer = null;
 let returnsLoaded = false;
+
+function loadRecentCards() {
+  const el = document.getElementById('recentCards');
+  if (!el) return;
+  const top5 = [...allData.closed].sort((a, b) => (b.rate||0)-(a.rate||0)).slice(0, 5);
+  if (!top5.length) {
+    document.getElementById('recentClosedBlock').style.display = 'none';
+    return;
+  }
+  document.getElementById('recentClosedBlock').style.display = '';
+  el.innerHTML = top5.map(d => {
+    const rc = rateClass(d.rate);
+    const bw = barWidth(d.rate);
+    return `<div class="recent-card" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+      <div class="rc-header">
+        <div class="rc-name">${escHtml(d.name)}</div>
+        ${exchangeBadge(d.market)}
+      </div>
+      <div class="rc-rate ${rc}">${d.rate ? d.rate.toLocaleString()+':1' : '—'}</div>
+      <div class="rc-bar-bg"><div class="rc-bar-fill ${rc}" style="width:${bw}%"></div></div>
+      <div class="rc-meta">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
+      <div class="rc-price">${d.price ? d.price.toLocaleString()+'원' : '—'} · ${escHtml(d.underwriter||'—')}</div>
+    </div>`;
+  }).join('');
+}
 
 async function loadReturnsSection() {
   if (returnsLoaded) return;
@@ -1157,6 +1487,7 @@ function buildOngoingRows(data) {
     <td class="right">
       <div class="offer-price">${d.price ? d.price.toLocaleString()+'원' : '미정'}</div>
       <div class="price-range">${escHtml(d.price_range || '—')}</div>
+      ${(()=>{ const dep = minDepositLabel(d); return dep ? `<div class="min-deposit">최소 ${dep}</div>` : ''; })()}
     </td>
     <td>
       <div class="date-range">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
@@ -1184,6 +1515,7 @@ function buildNewRows(data) {
       <td>
         <div class="offer-price">${escHtml(d.price_range || '미정')}</div>
         <div class="price-range">희망 밴드</div>
+        ${(()=>{ const dep = minDepositLabel(d); return dep ? `<div class="min-deposit">최소 ${dep}</div>` : ''; })()}
       </td>
       <td>
         <div class="date-range">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
@@ -1279,8 +1611,7 @@ function render() {
   ];
 
   const panelOg = document.getElementById('panel-ongoing');
-  if (!panelOg.querySelector('table')) panelOg.innerHTML = tableShell(ongoingThs, 'tbody-ongoing');
-  document.getElementById('tbody-ongoing').innerHTML = buildOngoingRows(og);
+  panelOg.innerHTML = buildOngoingCards(og);
 
   const panelNw = document.getElementById('panel-new');
   if (!panelNw.querySelector('table')) panelNw.innerHTML = tableShell(newThs, 'tbody-new');
@@ -1310,11 +1641,9 @@ function render() {
   const currentCount = currentTab === 'ongoing' ? og.length : currentTab === 'new' ? nw.length : cl.length;
   document.getElementById('resultCount').textContent = `${currentCount}개 종목`;
 
-  // 진행중 없을 때 수익률 섹션 로드
-  if (allData.ongoing.length === 0 && document.getElementById('returnsCards')) {
-    returnsLoaded = false; // 데이터 갱신 시 재로드
-    loadReturnsSection();
-  }
+  // 하단 섹션 항상 로드
+  loadRecentCards();
+  loadReturnsSection();
 }
 
 // ── Data fetch ────────────────────────────────────────────────────────────────
@@ -1400,6 +1729,26 @@ function renderModalBasic(ipo) {
         </div>
       </div>
     </div>
+    ${(()=>{
+      const amt = minDepositAmt(ipo);
+      if (!amt) return '';
+      const isConfirmed = !!ipo.price;
+      return `<div class="modal-section">
+        <div class="modal-section-title">최소 청약 참여 비용</div>
+        <div class="min-deposit-box">
+          <div class="min-deposit-main">
+            <span class="min-deposit-label">최소 증거금</span>
+            <span class="min-deposit-value">${fmtMoney(amt)}</span>
+          </div>
+          <div class="min-deposit-detail">
+            10주 청약 기준 &nbsp;·&nbsp; 증거금 50% &nbsp;·&nbsp; ${isConfirmed ? `확정 공모가 ${ipo.price.toLocaleString()}원` : `희망밴드 상단 기준`}
+          </div>
+          <div class="min-deposit-detail" style="margin-top:4px">
+            100주: <b>${fmtMoney(amt*10)}</b> &nbsp;·&nbsp; 1,000주: <b>${fmtMoney(amt*100)}</b>
+          </div>
+        </div>
+      </div>`;
+    })()}
     ${ipo.no ? '<div class="modal-loading"><div class="spinner"></div>증권사별 상세 정보 불러오는 중...</div>' : ''}
   `;
 }
@@ -1507,6 +1856,54 @@ function renderModalDetail(ipo, d) {
         ${d.public_amount ? `<div class="stat-box"><div class="stat-label">공모금액</div><div class="stat-value" style="font-size:13px">${escHtml(d.public_amount)}백만원</div></div>` : ''}
       </div>
     </div>
+    ${(()=>{
+      const amt = minDepositAmt(ipo);
+      if (!amt) return '';
+      const isConfirmed = !!ipo.price;
+      return `<div class="modal-section">
+        <div class="modal-section-title">최소 청약 참여 비용</div>
+        <div class="min-deposit-box">
+          <div class="min-deposit-main">
+            <span class="min-deposit-label">최소 증거금</span>
+            <span class="min-deposit-value">${fmtMoney(amt)}</span>
+          </div>
+          <div class="min-deposit-detail">
+            10주 청약 기준 &nbsp;·&nbsp; 증거금 50% &nbsp;·&nbsp; ${isConfirmed ? `확정 공모가 ${ipo.price.toLocaleString()}원` : `희망밴드 상단 기준`}
+          </div>
+          <div class="min-deposit-scale">
+            <div class="scale-item"><span class="scale-n">10주</span><span class="scale-v">${fmtMoney(amt)}</span></div>
+            <div class="scale-item"><span class="scale-n">100주</span><span class="scale-v">${fmtMoney(amt*10)}</span></div>
+            <div class="scale-item"><span class="scale-n">1,000주</span><span class="scale-v">${fmtMoney(amt*100)}</span></div>
+            <div class="scale-item"><span class="scale-n">10,000주</span><span class="scale-v">${fmtMoney(amt*1000)}</span></div>
+          </div>
+        </div>
+      </div>`;
+    })()}
+    ${(()=>{
+      const gs = d.general_shares;
+      if (!gs) return '';
+      const pool = Math.floor(gs * 0.5);
+      const rows = [
+        { label: '1만명', n: 10000 },
+        { label: '3만명', n: 30000 },
+        { label: '5만명', n: 50000 },
+        { label: '10만명', n: 100000 },
+        { label: '30만명', n: 300000 },
+      ].map(({ label, n }) => {
+        const shares = Math.floor(pool / n);
+        const pct = shares >= 1 ? '' : '<span style="color:var(--text3);font-size:11px"> (1주 미만)</span>';
+        return `<div class="alloc-row">
+          <span class="alloc-label">청약자 ${label} 예상 시</span>
+          <span class="alloc-value">${shares >= 1 ? `약 <b>${shares}주</b>` : '1주 미만'}${pct}</span>
+        </div>`;
+      }).join('');
+      return `<div class="modal-section">
+        <div class="modal-section-title">균등 배정 예상</div>
+        <div class="alloc-info">일반 배정 ${gs.toLocaleString()}주 중 균등 배정 풀: <b>${pool.toLocaleString()}주</b> (50%)</div>
+        <div class="alloc-list">${rows}</div>
+        <div class="alloc-note">실제 배정은 청약자 수·최종 공모가에 따라 달라집니다.</div>
+      </div>`;
+    })()}
     ${brokerHtml}
     ${instHtml}
     ${scheduleHtml}

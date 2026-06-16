@@ -6,7 +6,7 @@ import asyncio
 import re
 import time
 from datetime import datetime, date
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import httpx
 from bs4 import BeautifulSoup
 
@@ -154,6 +154,7 @@ def scrape_detail(html: str) -> dict:
         'current_price':  None, # 현재가 (상장 후)
         'total_shares':   None, # 총 공모주식수
         'public_amount':  None, # 공모금액
+        'general_shares': None, # 일반청약자 배정 주식수 (균등 배정 계산용)
     }
 
     # ── 증권사별 배정 테이블 (인수회사|주식수|청약한도|기타) ──
@@ -223,6 +224,16 @@ def scrape_detail(html: str) -> dict:
                 if m:
                     result['public_amount'] = m.group(1)
 
+        # 일반청약자 배정 주식수 (균등 배정 계산용)
+        # 패턴 예: "일반청약자\n 500,000~600,000 주 (25.00~30.00%)"
+        if '일반청약자' in text and result['general_shares'] is None:
+            m = re.search(r'일반청약자[^\d]*([\d,]+)\s*~?\s*([\d,]*)\s*주', text)
+            if m:
+                lo = int(m.group(1).replace(',', ''))
+                hi_raw = m.group(2).replace(',', '')
+                hi = int(hi_raw) if hi_raw else lo
+                result['general_shares'] = lo  # 보수적으로 하한 사용
+
     return result
 
 
@@ -269,6 +280,21 @@ async def get_detail(no: str) -> dict:
 def api_ipos():
     try:
         data = asyncio.run(get_data())
+
+        # 로컬 미리보기용: ?mock=1 파라미터로 첫 번째 예정 종목을 진행중으로 표시
+        if request.args.get('mock') == '1' and data.get('new'):
+            import copy
+            mock = copy.deepcopy(data['new'][0])
+            mock['status'] = 'ongoing'
+            mock['rate'] = 1847.25
+            mock['rate_raw'] = '1847.25:1'
+            if not mock.get('price') and mock.get('price_range'):
+                m = re.search(r'([\d,]+)\s*$', mock['price_range'])
+                if m:
+                    mock['price'] = int(m.group(1).replace(',', ''))
+            data = dict(data)
+            data['ongoing'] = [mock] + list(data['ongoing'])
+
         resp = jsonify(data)
         resp.headers['Access-Control-Allow-Origin'] = '*'
         resp.headers['Cache-Control'] = 'no-cache'
