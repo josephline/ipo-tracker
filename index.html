@@ -3,7 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>공모주 청약 현황</title>
+  <title>공모주 청약 현황 — 실시간 청약 경쟁률 조회</title>
+  <meta name="description" content="국내 공모주 청약 경쟁률을 실시간으로 확인하세요. 진행중·예정·마감 종목, 증권사별 배정 현황, 공모가 대비 수익률을 한눈에 제공합니다." />
+  <meta name="keywords" content="공모주, 청약 경쟁률, 공모주 청약, IPO, 공모가, 청약률, 주간사, 증권사 청약" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ipo-tracker-ympc.onrender.com/" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="공모주 청약 현황 — 실시간 청약 경쟁률 조회" />
+  <meta property="og:description" content="국내 공모주 청약 경쟁률을 실시간으로 확인하세요. 진행중·예정·마감 종목, 증권사별 배정 현황, 공모가 대비 수익률을 한눈에 제공합니다." />
+  <meta property="og:url" content="https://ipo-tracker-ympc.onrender.com/" />
+  <meta property="og:site_name" content="공모주 청약 현황" />
+  <meta property="og:locale" content="ko_KR" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="공모주 청약 현황 — 실시간 청약 경쟁률 조회" />
+  <meta name="twitter:description" content="국내 공모주 청약 경쟁률을 실시간으로 확인하세요. 진행중·예정·마감 종목, 증권사별 배정 현황, 공모가 대비 수익률을 한눈에 제공합니다." />
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "공모주 청약 현황",
+    "url": "https://ipo-tracker-ympc.onrender.com/",
+    "description": "국내 공모주 청약 경쟁률을 실시간으로 제공하는 무료 정보 서비스",
+    "inLanguage": "ko-KR",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://ipo-tracker-ympc.onrender.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1536,7 +1567,12 @@ setInterval(fetchData, REFRESH_MS);
 <footer class="site-footer">
   <div class="footer-inner">
     <span class="footer-text">공모주 청약 현황 · 출처: 38커뮤니케이션</span>
-    <span class="footer-text">·</span>
+    <span class="footer-text" style="color:var(--border)">|</span>
+    <a href="/guide" class="footer-text" style="text-decoration:none;color:var(--text3)">이용 가이드</a>
+    <a href="/about" class="footer-text" style="text-decoration:none;color:var(--text3)">사이트 소개</a>
+    <a href="/privacy" class="footer-text" style="text-decoration:none;color:var(--text3)">개인정보처리방침</a>
+    <a href="/contact" class="footer-text" style="text-decoration:none;color:var(--text3)">문의하기</a>
+    <span class="footer-text" style="color:var(--border)">|</span>
     <a href="https://t.me/lineblock5" target="_blank" rel="noopener" class="lineblock-badge">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.04 9.61c-.152.676-.554.84-1.122.522l-3.1-2.284-1.496 1.44c-.165.165-.304.304-.624.304l.223-3.165 5.76-5.203c.25-.223-.055-.347-.388-.124l-7.12 4.482-3.067-.957c-.667-.208-.68-.667.14-.987l11.978-4.617c.555-.2 1.04.124.856.979z"/></svg>
       라인블록

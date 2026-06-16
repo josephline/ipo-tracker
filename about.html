@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>사이트 소개 — 공모주 청약 현황</title>
+  <meta name="description" content="공모주 청약 현황은 국내 공모주 청약 경쟁률을 실시간으로 제공하는 무료 정보 서비스입니다." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ipo-tracker-ympc.onrender.com/about" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222535;--border:#2e3148;--primary:#5b6af0;--primary-light:#7b8af5;--up:#ff5757;--down:#3db9ff;--text:#e8eaf6;--text2:#8b8fa8;--text3:#5c6080;--new:#f0a040;--ongoing:#50c96e;}
+    [data-theme="light"]{--bg:#f4f6fb;--surface:#ffffff;--surface2:#eef1f8;--border:#dde1ee;--primary:#4a58e0;--primary-light:#6270e8;--up:#e03535;--down:#1e9fd4;--text:#13172e;--text2:#4a5068;--text3:#8690a8;--new:#d47c10;--ongoing:#27a84e;}
+    *,*::before,*::after{transition:background-color .25s ease,border-color .25s ease,color .2s ease;}
+    body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','Noto Sans KR',-apple-system,sans-serif;min-height:100vh;line-height:1.7;}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;}
+    .header-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+    .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;text-decoration:none;color:var(--text);}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .header-right{display:flex;align-items:center;gap:16px;}
+    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;}
+    .nav-link:hover{color:var(--primary);}
+    .theme-toggle{position:relative;width:52px;height:26px;cursor:pointer;}
+    .theme-toggle input{opacity:0;width:0;height:0;}
+    .toggle-track{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:13px;display:flex;align-items:center;justify-content:space-between;padding:0 5px;overflow:hidden;}
+    .toggle-icon{font-size:11px;z-index:1;}
+    .toggle-thumb{position:absolute;left:3px;top:3px;width:20px;height:20px;background:var(--primary);border-radius:50%;transition:left .25s ease;}
+    .theme-toggle input:checked~.toggle-thumb{left:29px;}
+    .page-wrap{max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+    .hero{background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:16px;padding:48px 40px;margin-bottom:48px;color:#fff;}
+    .hero-title{font-size:32px;font-weight:800;margin-bottom:12px;}
+    .hero-desc{font-size:16px;opacity:0.9;line-height:1.7;max-width:560px;}
+    .section{margin-bottom:48px;}
+    .section-title{font-size:20px;font-weight:700;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--primary);}
+    .prose{font-size:14px;color:var(--text2);line-height:1.8;}
+    .prose p{margin-bottom:16px;}
+    .prose p:last-child{margin-bottom:0;}
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-top:20px;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+    .stat-value{font-size:28px;font-weight:800;color:var(--primary);margin-bottom:4px;}
+    .stat-label{font-size:13px;color:var(--text2);}
+    .tech-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+    .tech-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:13px;color:var(--text2);}
+    .disclaimer{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--new);border-radius:0 12px 12px 0;padding:16px 20px;font-size:13px;color:var(--text2);line-height:1.7;}
+    footer{border-top:1px solid var(--border);padding:24px;text-align:center;}
+    .footer-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;}
+    .footer-link{font-size:12px;color:var(--text3);text-decoration:none;}
+    .footer-link:hover{color:var(--primary);}
+    .footer-text{font-size:12px;color:var(--text3);}
+    @media(max-width:600px){.hero{padding:32px 24px;}.hero-title{font-size:24px;}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <div class="logo-icon">📈</div>
+      공모주 청약 현황
+    </a>
+    <div class="header-right">
+      <a href="/" class="nav-link">홈</a>
+      <a href="/guide" class="nav-link">이용 가이드</a>
+      <a href="/contact" class="nav-link">문의</a>
+      <label class="theme-toggle" title="다크/라이트 모드 전환">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme(this)" />
+        <div class="toggle-track">
+          <span class="toggle-icon">🌙</span>
+          <span class="toggle-icon">☀️</span>
+        </div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="hero">
+    <h1 class="hero-title">공모주 청약 현황</h1>
+    <p class="hero-desc">국내 공모주 청약 경쟁률을 실시간으로 확인할 수 있는 무료 정보 서비스입니다. 복잡한 회원가입 없이 누구나 즉시 이용할 수 있습니다.</p>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">서비스 소개</h2>
+    <div class="prose">
+      <p>공모주 청약 현황은 국내 공모주 시장의 정보를 손쉽게 파악할 수 있도록 만들어진 무료 웹 서비스입니다. 흩어져 있는 공모주 정보를 한 곳에서 빠르게 확인할 수 있도록 자동으로 수집·정리하여 제공합니다.</p>
+      <p>현재 진행 중인 공모주의 실시간 청약 경쟁률부터, 곧 시작될 예정 종목, 최근 마감된 종목의 상장 수익률까지 한 페이지에서 확인할 수 있습니다. 별도의 회원 가입 없이 접속 즉시 최신 정보를 볼 수 있습니다.</p>
+      <p>모든 데이터는 38커뮤니케이션(www.38.co.kr)에서 수집하며, 투자 판단을 돕기 위한 참고 정보로만 제공됩니다.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">주요 수치</h2>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">3분</div>
+        <div class="stat-label">데이터 갱신 주기</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">24/7</div>
+        <div class="stat-label">연중무휴 무료 제공</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">0원</div>
+        <div class="stat-label">이용 비용</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">무가입</div>
+        <div class="stat-label">회원가입 불필요</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">기술 스택</h2>
+    <div class="prose">
+      <p>이 서비스는 다음 기술을 기반으로 구축되었습니다.</p>
+    </div>
+    <div class="tech-list">
+      <span class="tech-chip">Python / Flask</span>
+      <span class="tech-chip">BeautifulSoup4</span>
+      <span class="tech-chip">httpx (비동기)</span>
+      <span class="tech-chip">Vanilla JavaScript</span>
+      <span class="tech-chip">CSS Variables (다크모드)</span>
+      <span class="tech-chip">Render (클라우드 배포)</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">데이터 출처 및 면책 고지</h2>
+    <div class="disclaimer">
+      본 서비스의 모든 공모주 데이터는 <b>38커뮤니케이션(www.38.co.kr)</b>에서 수집한 정보를 바탕으로 합니다. 데이터의 정확성을 위해 노력하지만, 수집 과정의 특성상 일부 오류나 지연이 발생할 수 있습니다.<br><br>
+      본 서비스에서 제공하는 모든 정보는 <b>투자 참고용</b>으로만 활용하시기 바랍니다. 공모주 투자에 따른 손익은 투자자 본인의 책임이며, 본 서비스는 투자 결과에 대한 법적 책임을 지지 않습니다.
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-text">© 2025 공모주 청약 현황</span>
+    <a href="/" class="footer-link">홈</a>
+    <a href="/guide" class="footer-link">이용 가이드</a>
+    <a href="/about" class="footer-link">사이트 소개</a>
+    <a href="/privacy" class="footer-link">개인정보처리방침</a>
+    <a href="/contact" class="footer-link">문의하기</a>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    const saved = localStorage.getItem('theme');
+    if(saved === 'light') {
+      document.documentElement.setAttribute('data-theme','light');
+      const t = document.getElementById('themeToggle');
+      if(t) t.checked = true;
+    }
+  })();
+  function toggleTheme(cb){
+    if(cb.checked){
+      document.documentElement.setAttribute('data-theme','light');
+      localStorage.setItem('theme','light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme','dark');
+    }
+  }
+</script>
+</body>
+</html>

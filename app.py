@@ -332,6 +332,43 @@ def index():
     return app.send_static_file('index.html')
 
 
+@app.route('/guide')
+def guide():
+    return app.send_static_file('guide.html')
+
+
+@app.route('/about')
+def about():
+    return app.send_static_file('about.html')
+
+
+@app.route('/privacy')
+def privacy():
+    return app.send_static_file('privacy.html')
+
+
+@app.route('/contact')
+def contact():
+    return app.send_static_file('contact.html')
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    from flask import Response
+    return Response(
+        open('sitemap.xml', 'r', encoding='utf-8').read(),
+        mimetype='application/xml'
+    )
+
+
+@app.route('/robots.txt')
+def robots():
+    from flask import Response
+    return Response(
+        open('robots.txt', 'r', encoding='utf-8').read(),
+        mimetype='text/plain'
+    )
+
 
 if __name__ == '__main__':
     print('Server running: http://localhost:5000')
