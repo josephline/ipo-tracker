@@ -396,6 +396,26 @@ def robots():
     )
 
 
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon.ico')
+
+
+@app.route('/apple-touch-icon.png')
+def apple_touch_icon():
+    return app.send_static_file('apple-touch-icon.png')
+
+
+@app.route('/icon-192.png')
+def icon_192():
+    return app.send_static_file('icon-192.png')
+
+
+@app.route('/icon-512.png')
+def icon_512():
+    return app.send_static_file('icon-512.png')
+
+
 if __name__ == '__main__':
     print('Server running: http://localhost:5000')
     app.run(debug=False, port=5000, threaded=True)
