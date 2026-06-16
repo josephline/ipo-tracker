@@ -392,29 +392,22 @@
       padding: 32px 0 48px;
     }
 
-    /* 카운트다운 배너 */
-    .countdown-banner {
-      background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 50%, var(--surface) 100%);
+    /* 카운트다운 카드 (진행중 카드와 동일 구조) */
+    .countdown-card {
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 32px 36px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      position: relative;
       overflow: hidden;
-      margin-bottom: 32px;
+      position: relative;
+      margin-bottom: 16px;
     }
-
-    .countdown-banner::before {
+    .countdown-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary), var(--primary-light), transparent);
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
     }
-
     .countdown-glow {
       position: absolute;
       top: -60px; right: -60px;
@@ -422,53 +415,107 @@
       background: radial-gradient(circle, rgba(91,106,240,0.12) 0%, transparent 70%);
       pointer-events: none;
     }
-
-    .countdown-left { flex: 1; min-width: 0; }
-
-    .countdown-eyebrow {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-      color: var(--primary-light); text-transform: uppercase;
-      margin-bottom: 6px;
+    /* 헤더 */
+    .cd-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 18px 12px;
     }
-
-    .countdown-name {
-      font-size: 22px; font-weight: 800;
-      color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      margin-bottom: 6px;
+    .cd-logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
     }
-
-    .countdown-meta {
-      font-size: 13px; color: var(--text3);
-      display: flex; gap: 16px; flex-wrap: wrap;
+    .cd-info { flex: 1; min-width: 0; }
+    .cd-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cd-badges { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); }
+    .cd-soon-tag {
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      background: rgba(91,106,240,0.15); color: var(--primary-light);
+      white-space: nowrap; flex-shrink: 0;
+      animation: pulse-badge 2s infinite;
     }
-
-    .countdown-meta span { display: flex; align-items: center; gap: 4px; }
-
-    .countdown-right {
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
+    /* 2열 바디 */
+    .cd-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
     }
-
+    /* 좌: 카운트다운 */
+    .cd-timer-section {
+      padding: 18px 18px 16px;
+      background: var(--surface2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .cd-timer-label {
+      font-size: 11px; color: var(--text3); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cd-timer-dot {
+      width: 6px; height: 6px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .cd-boxes {
+      display: flex; gap: 8px; align-items: center;
+    }
     .cd-box {
       display: flex; flex-direction: column; align-items: center;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 18px; min-width: 72px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; min-width: 58px;
+      flex: 1;
     }
-
     .cd-num {
-      font-size: 32px; font-weight: 800;
+      font-size: 26px; font-weight: 800;
       color: var(--text); line-height: 1;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum";
     }
-
     .cd-num.highlight { color: var(--primary-light); }
-
     .cd-label {
       font-size: 10px; color: var(--text3);
       margin-top: 4px; letter-spacing: 0.05em;
+    }
+    .cd-sep { font-size: 20px; font-weight: 700; color: var(--text3); flex-shrink: 0; }
+    /* 우: 기본 정보 */
+    .cd-stats-section {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      padding: 14px 18px;
+      align-content: center;
+    }
+    /* 하단: detail 정보 */
+    .cd-detail-section {
+      border-top: 1px solid var(--border);
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+    .cd-detail-item {
+      text-align: center; padding: 0 8px;
+      border-right: 1px solid var(--border);
+    }
+    .cd-detail-item:last-child { border-right: none; }
+    .cd-detail-label {
+      font-size: 10px; color: var(--text3); text-transform: uppercase;
+      letter-spacing: 0.4px; margin-bottom: 5px;
+    }
+    .cd-detail-value {
+      font-size: 14px; font-weight: 700;
+    }
+    .cd-detail-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .cd-detail-loading { font-size: 12px; color: var(--text3); text-align: center; padding: 8px 0; }
+    @media (max-width: 600px) {
+      .cd-body { grid-template-columns: 1fr; }
+      .cd-timer-section { border-right: none; border-bottom: 1px solid var(--border); }
+      .cd-detail-section { grid-template-columns: 1fr 1px 1fr; }
+      .cd-detail-item:last-child { display: none; }
     }
 
     .cd-sep {
@@ -1309,31 +1356,101 @@ function buildOngoingEmpty() {
   }
   const startMs = new Date(next.date_start + 'T09:00:00');
   setTimeout(() => startCountdown(startMs), 0);
+  setTimeout(() => loadCountdownDetail(next), 0);
+
+  const dep = minDepositAmt(next);
+  const daysUntil = Math.ceil((startMs - Date.now()) / 86400000);
+  const soonLabel = daysUntil <= 1 ? 'D-DAY' : `D-${daysUntil}`;
+
   return `
     <div class="no-ongoing">
-      <div class="countdown-banner">
+      <div class="countdown-card">
         <div class="countdown-glow"></div>
-        <div class="countdown-left">
-          <div class="countdown-eyebrow">다음 청약 예정</div>
-          <div class="countdown-name">${escHtml(next.name)}</div>
-          <div class="countdown-meta">
-            <span>${exchangeBadge(next.market)}</span>
-            <span>📅 ${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</span>
-            ${next.price_range ? `<span>💰 ${escHtml(next.price_range)}</span>` : ''}
-            ${next.underwriter ? `<span>🏦 ${escHtml(next.underwriter)}</span>` : ''}
+        <div class="cd-header">
+          <div class="cd-logo">${escHtml(abbr(next.name))}</div>
+          <div class="cd-info">
+            <div class="cd-name">${escHtml(next.name)}</div>
+            <div class="cd-badges">
+              ${exchangeBadge(next.market)}
+              ${next.underwriter ? `<span>${escHtml(next.underwriter)}</span>` : ''}
+            </div>
+          </div>
+          <div class="cd-soon-tag">${escHtml(soonLabel)}</div>
+        </div>
+
+        <div class="cd-body">
+          <div class="cd-timer-section">
+            <div class="cd-timer-label">
+              <span class="cd-timer-dot"></span>
+              청약 시작까지
+            </div>
+            <div class="cd-boxes" id="cdBoxes">
+              <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
+            </div>
+          </div>
+
+          <div class="cd-stats-section">
+            <div class="icard-stat">
+              <div class="icard-stat-label">희망 공모가</div>
+              <div class="icard-stat-value" style="font-size:12px">${escHtml(next.price_range || '미확정')}</div>
+              <div class="icard-stat-sub">희망가 범위</div>
+            </div>
+            <div class="icard-vdivider"></div>
+            <div class="icard-stat">
+              <div class="icard-stat-label">최소 증거금</div>
+              <div class="icard-stat-value green">${dep ? fmtMoney(dep) : '미확정'}</div>
+              <div class="icard-stat-sub">10주 · 50%</div>
+            </div>
+            <div class="icard-vdivider"></div>
+            <div class="icard-stat">
+              <div class="icard-stat-label">청약 기간</div>
+              <div class="icard-stat-value" style="font-size:12px">${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</div>
+              <div class="icard-stat-sub">${escHtml(next.underwriter || '—')}</div>
+            </div>
           </div>
         </div>
-        <div class="countdown-right" id="cdBoxes">
-          <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
-          <div class="cd-sep">:</div>
-          <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
+
+        <div class="cd-detail-section" id="cd-detail-body">
+          <div class="cd-detail-loading" style="grid-column:1/-1">수요예측 결과 불러오는 중...</div>
         </div>
       </div>
     </div>`;
+}
+
+function loadCountdownDetail(next) {
+  if (!next.no) return;
+  const el = document.getElementById('cd-detail-body');
+  if (!el) return;
+  fetch(`/api/ipos/${next.no}/detail`)
+    .then(r => r.json())
+    .then(detail => {
+      const inst = detail.institutional || '—';
+      const lockup = detail.lockup || '—';
+      const listing = detail.listing_date || '—';
+      el.innerHTML = `
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">기관 경쟁률</div>
+          <div class="cd-detail-value" style="color:var(--primary-light)">${escHtml(inst)}</div>
+          <div class="cd-detail-sub">수요예측 결과</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">의무보유확약</div>
+          <div class="cd-detail-value" style="color:var(--ongoing)">${escHtml(lockup)}</div>
+          <div class="cd-detail-sub">기관 확약 비율</div>
+        </div>
+        <div class="cd-detail-item">
+          <div class="cd-detail-label">상장 예정일</div>
+          <div class="cd-detail-value">${escHtml(listing)}</div>
+          <div class="cd-detail-sub">코스닥 상장</div>
+        </div>`;
+    })
+    .catch(() => { if (el) el.innerHTML = '<div class="cd-detail-loading" style="grid-column:1/-1">수요예측 정보 없음</div>'; });
 }
 
 function buildOngoingCards(data) {
