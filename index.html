@@ -758,6 +758,7 @@
       gap: 16px;
       padding: 16px 0;
     }
+    .ongoing-cards.single { grid-template-columns: 1fr; }
 
     .ipo-card {
       background: var(--surface);
@@ -767,6 +768,68 @@
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       position: relative;
+    }
+    /* 1개일 때 좌우 2열 레이아웃 */
+    .ongoing-cards.single .ipo-card { display: flex; flex-direction: column; }
+    .ongoing-cards.single .icard-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      flex: 1;
+    }
+    .ongoing-cards.single .icard-rate-section {
+      border-right: 1px solid var(--border);
+      border-bottom: none;
+      border-top: 1px solid var(--border);
+    }
+    .ongoing-cards.single .icard-right {
+      display: flex;
+      flex-direction: column;
+    }
+    .ongoing-cards.single .icard-footer {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      align-content: center;
+    }
+    /* 균등 배정 섹션 */
+    .icard-equal-section {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .icard-equal-title {
+      font-size: 11px; color: var(--text3); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .icard-equal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .icard-equal-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .icard-equal-applicants {
+      font-size: 10px; color: var(--text3); margin-bottom: 4px;
+    }
+    .icard-equal-shares {
+      font-size: 15px; font-weight: 800; color: var(--primary-light);
+    }
+    .icard-equal-shares.high { color: var(--ongoing); }
+    .icard-equal-shares.low  { color: var(--text2); }
+    .icard-equal-loading {
+      font-size: 12px; color: var(--text3); text-align: center; padding: 4px 0;
+    }
+    @media (max-width: 600px) {
+      .ongoing-cards.single .icard-body { grid-template-columns: 1fr; }
+      .ongoing-cards.single .icard-rate-section { border-right: none; border-bottom: 1px solid var(--border); }
+      .icard-equal-grid { grid-template-columns: repeat(2, 1fr); }
     }
     .ipo-card::before {
       content: '';
@@ -1276,7 +1339,9 @@ function buildOngoingEmpty() {
 function buildOngoingCards(data) {
   if (!data.length) return buildOngoingEmpty();
 
-  return `<div class="ongoing-cards">
+  const single = data.length === 1;
+
+  return `<div class="ongoing-cards${single ? ' single' : ''}">
     ${data.map(d => {
       const rc = rateClass(d.rate);
       const bw = barWidth(d.rate);
@@ -1284,23 +1349,11 @@ function buildOngoingCards(data) {
       const dd = d.date_end ? dday(d.date_end) : null;
       const ddLabel = dd ? dd.label : '';
       const ddUrgent = d.date_end && dday(d.date_end)?.n <= 1 ? ' urgent' : '';
-
       const accentMap = { up: 'var(--up)', primary: 'var(--primary)', down: 'var(--down)' };
       const accent = accentMap[rc] || 'var(--primary)';
+      const cardId = 'card-' + (d.no || d.name.replace(/\s/g,''));
 
-      return `<div class="ipo-card" style="--card-accent:${accent}" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
-        <div class="icard-header">
-          <div class="icard-logo">${escHtml(abbr(d.name))}</div>
-          <div class="icard-info">
-            <div class="icard-name">${escHtml(d.name)}</div>
-            <div class="icard-badges">
-              ${exchangeBadge(d.market)}
-              ${d.underwriter ? `<span>${escHtml(d.underwriter)}</span>` : ''}
-            </div>
-          </div>
-          ${ddLabel ? `<div class="icard-dday${ddUrgent}">${escHtml(ddLabel)}</div>` : ''}
-        </div>
-
+      const rateSection = `
         <div class="icard-rate-section">
           <div class="icard-rate-header">
             <span class="icard-rate-label">
@@ -1317,8 +1370,9 @@ function buildOngoingCards(data) {
             </div>
           </div>
           <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')}</div>
-        </div>
+        </div>`;
 
+      const footerSection = `
         <div class="icard-footer">
           <div class="icard-stat">
             <div class="icard-stat-label">공모가</div>
@@ -1337,10 +1391,72 @@ function buildOngoingCards(data) {
             <div class="icard-stat-value" style="font-size:12px">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
             <div class="icard-stat-sub">${escHtml(d.underwriter || '—')}</div>
           </div>
+        </div>`;
+
+      const equalSection = single ? `
+        <div class="icard-equal-section" id="${cardId}-equal">
+          <div class="icard-equal-title">
+            <span class="icard-live-dot"></span>
+            균등 배정 예상 수량 (청약자 수별)
+          </div>
+          <div class="icard-equal-loading" id="${cardId}-equal-body">데이터 불러오는 중...</div>
+        </div>` : '';
+
+      const bodyHtml = single
+        ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${equalSection}`
+        : `${rateSection}${footerSection}`;
+
+      return `<div class="ipo-card" id="${cardId}" style="--card-accent:${accent}" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+        <div class="icard-header">
+          <div class="icard-logo">${escHtml(abbr(d.name))}</div>
+          <div class="icard-info">
+            <div class="icard-name">${escHtml(d.name)}</div>
+            <div class="icard-badges">
+              ${exchangeBadge(d.market)}
+              ${d.underwriter ? `<span>${escHtml(d.underwriter)}</span>` : ''}
+            </div>
+          </div>
+          ${ddLabel ? `<div class="icard-dday${ddUrgent}">${escHtml(ddLabel)}</div>` : ''}
         </div>
+        ${bodyHtml}
       </div>`;
     }).join('')}
   </div>`;
+}
+
+function loadEqualSection(d) {
+  if (!d.no) return;
+  const cardId = 'card-' + (d.no || d.name.replace(/\s/g,''));
+  const bodyEl = document.getElementById(cardId + '-equal-body');
+  if (!bodyEl) return;
+
+  fetch(`/api/ipos/${d.no}/detail`)
+    .then(r => r.json())
+    .then(detail => {
+      const gs = detail.general_shares;
+      if (!gs) {
+        bodyEl.textContent = '배정 정보 없음';
+        return;
+      }
+      const equalPool = Math.floor(gs * 0.5);
+      const scenarios = [
+        { label: '1만명', n: 10000 },
+        { label: '3만명', n: 30000 },
+        { label: '10만명', n: 100000 },
+        { label: '30만명', n: 300000 },
+      ];
+      bodyEl.outerHTML = `<div class="icard-equal-grid" id="${cardId}-equal-body">
+        ${scenarios.map(s => {
+          const shares = Math.floor(equalPool / s.n);
+          const cls = shares >= 2 ? 'high' : shares === 1 ? '' : 'low';
+          return `<div class="icard-equal-item">
+            <div class="icard-equal-applicants">${s.label} 참여시</div>
+            <div class="icard-equal-shares ${cls}">${shares > 0 ? shares + '주' : '미배정'}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    })
+    .catch(() => { if (bodyEl) bodyEl.textContent = '정보 불러오기 실패'; });
 }
 
 let cdTimer = null;
@@ -1615,6 +1731,7 @@ function render() {
 
   const panelOg = document.getElementById('panel-ongoing');
   panelOg.innerHTML = buildOngoingCards(og);
+  if (og.length === 1) loadEqualSection(og[0]);
 
   const panelNw = document.getElementById('panel-new');
   if (!panelNw.querySelector('table')) panelNw.innerHTML = tableShell(newThs, 'tbody-new');
