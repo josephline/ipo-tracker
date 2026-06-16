@@ -16,7 +16,7 @@
     header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;}
     .header-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
     .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;text-decoration:none;color:var(--text);}
-    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .logo-icon{width:32px;height:32px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
     .header-right{display:flex;align-items:center;gap:16px;}
     .nav-link{font-size:13px;color:var(--text2);text-decoration:none;}
     .nav-link:hover{color:var(--primary);}
@@ -58,7 +58,7 @@
 <header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <div class="logo-icon">📈</div>
+      <img class="logo-icon" src="/icon-192.png" alt="로고" />
       공모주 청약 현황
     </a>
     <div class="header-right">
