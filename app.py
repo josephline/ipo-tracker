@@ -5,7 +5,7 @@
 import asyncio
 import re
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from flask import Flask, jsonify, request
 import httpx
 from bs4 import BeautifulSoup
@@ -37,8 +37,13 @@ def parse_date(s: str):
         return None
 
 
+KST = timezone(timedelta(hours=9))
+
+def today_kst():
+    return datetime.now(KST).date()
+
 def classify(start, end):
-    today = date.today()
+    today = today_kst()
     if start is None or end is None:
         return 'new'
     if today < start:
