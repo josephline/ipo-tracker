@@ -155,6 +155,7 @@ def scrape_detail(html: str) -> dict:
         'total_shares':   None, # 총 공모주식수
         'public_amount':  None, # 공모금액
         'general_shares': None, # 일반청약자 배정 주식수 (균등 배정 계산용)
+        'sub_rate':       None, # 청약 경쟁률 (진행중 실시간)
     }
 
     # ── 증권사별 배정 테이블 (인수회사|주식수|청약한도|기타) ──
@@ -234,6 +235,13 @@ def scrape_detail(html: str) -> dict:
                 hi = int(hi_raw) if hi_raw else lo
                 result['general_shares'] = lo  # 보수적으로 하한 사용
 
+        # 청약 경쟁률 (진행중 실시간 / 마감 후 최종)
+        # 패턴 예: "청약경쟁률 1847.25:1" 또는 "청약경쟁률1847.25:1 (비례 ...)"
+        if '청약경쟁률' in text and result['sub_rate'] is None:
+            m = re.search(r'청약경쟁률\s*([\d,]+\.?\d*)\s*:\s*1', text)
+            if m:
+                result['sub_rate'] = float(m.group(1).replace(',', ''))
+
     return result
 
 
@@ -249,6 +257,25 @@ async def get_data() -> dict:
     ongoing = sorted([x for x in ipos if x['status'] == 'ongoing'], key=lambda x: -(x['rate'] or 0))
     new     = sorted([x for x in ipos if x['status'] == 'new'],     key=lambda x: x['date_start'] or '')
     closed  = sorted([x for x in ipos if x['status'] == 'closed'],  key=lambda x: -(x['rate'] or 0))
+
+    # 진행중 IPO의 실시간 경쟁률을 detail 페이지에서 병렬로 가져온다
+    async def enrich_ongoing(ipo):
+        if not ipo.get('no'):
+            return ipo
+        try:
+            detail = await get_detail(ipo['no'])
+            sub_rate = detail.get('sub_rate')
+            if sub_rate and not ipo.get('rate'):
+                ipo = dict(ipo)
+                ipo['rate'] = sub_rate
+                ipo['rate_raw'] = f"{sub_rate}:1"
+        except Exception:
+            pass
+        return ipo
+
+    if ongoing:
+        ongoing = list(await asyncio.gather(*[enrich_ongoing(x) for x in ongoing]))
+        ongoing = sorted(ongoing, key=lambda x: -(x['rate'] or 0))
 
     result = {
         'ongoing':    ongoing,
