@@ -1511,6 +1511,11 @@ function buildOngoingCards(data) {
           </div>
         </div>`;
 
+      const detailSection = `
+        <div class="cd-detail-section" id="${cardId}-detail">
+          <div class="cd-detail-loading" style="grid-column:1/-1">수요예측 정보 불러오는 중...</div>
+        </div>`;
+
       const equalSection = single ? `
         <div class="icard-equal-section" id="${cardId}-equal">
           <div class="icard-equal-title">
@@ -1521,8 +1526,8 @@ function buildOngoingCards(data) {
         </div>` : '';
 
       const bodyHtml = single
-        ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${equalSection}`
-        : `${rateSection}${footerSection}`;
+        ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${detailSection}${equalSection}`
+        : `${rateSection}${footerSection}${detailSection}`;
 
       return `<div class="ipo-card" id="${cardId}" style="--card-accent:${accent}" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
         <div class="icard-header">
@@ -1545,17 +1550,40 @@ function buildOngoingCards(data) {
 function loadEqualSection(d) {
   if (!d.no) return;
   const cardId = 'card-' + (d.no || d.name.replace(/\s/g,''));
-  const bodyEl = document.getElementById(cardId + '-equal-body');
-  if (!bodyEl) return;
 
   fetch(`/api/ipos/${d.no}/detail`)
     .then(r => r.json())
     .then(detail => {
-      const gs = detail.general_shares;
-      if (!gs) {
-        bodyEl.textContent = '배정 정보 없음';
-        return;
+      // ── 기관경쟁률 · 의무보유확약 · 상장예정일 ──
+      const detailEl = document.getElementById(cardId + '-detail');
+      if (detailEl) {
+        const inst    = detail.institutional || '—';
+        const lockup  = detail.lockup        || '—';
+        const listing = detail.listing_date  || '—';
+        const market  = d.market === 'kospi' ? '코스피' : '코스닥';
+        detailEl.innerHTML = `
+          <div class="cd-detail-item">
+            <div class="cd-detail-label">기관 경쟁률</div>
+            <div class="cd-detail-value" style="color:var(--primary-light)">${escHtml(inst)}</div>
+            <div class="cd-detail-sub">수요예측 결과</div>
+          </div>
+          <div class="cd-detail-item">
+            <div class="cd-detail-label">의무보유확약</div>
+            <div class="cd-detail-value" style="color:var(--ongoing)">${escHtml(lockup)}</div>
+            <div class="cd-detail-sub">기관 확약 비율</div>
+          </div>
+          <div class="cd-detail-item">
+            <div class="cd-detail-label">상장 예정일</div>
+            <div class="cd-detail-value">${escHtml(listing)}</div>
+            <div class="cd-detail-sub">${market} 상장</div>
+          </div>`;
       }
+
+      // ── 균등 배정 예상 (single 카드만) ──
+      const bodyEl = document.getElementById(cardId + '-equal-body');
+      if (!bodyEl) return;
+      const gs = detail.general_shares;
+      if (!gs) { bodyEl.textContent = '배정 정보 없음'; return; }
       const equalPool = Math.floor(gs * 0.5);
       const scenarios = [
         { label: '1만명', n: 10000 },
@@ -1574,7 +1602,10 @@ function loadEqualSection(d) {
         }).join('')}
       </div>`;
     })
-    .catch(() => { if (bodyEl) bodyEl.textContent = '정보 불러오기 실패'; });
+    .catch(() => {
+      const detailEl = document.getElementById(cardId + '-detail');
+      if (detailEl) detailEl.innerHTML = '<div class="cd-detail-loading" style="grid-column:1/-1">수요예측 정보 없음</div>';
+    });
 }
 
 let cdTimer = null;
@@ -1849,7 +1880,7 @@ function render() {
 
   const panelOg = document.getElementById('panel-ongoing');
   panelOg.innerHTML = buildOngoingCards(og);
-  if (og.length === 1) loadEqualSection(og[0]);
+  og.forEach(d => loadEqualSection(d));
 
   const panelNw = document.getElementById('panel-new');
   if (!panelNw.querySelector('table')) panelNw.innerHTML = tableShell(newThs, 'tbody-new');
