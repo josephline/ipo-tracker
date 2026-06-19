@@ -874,6 +874,33 @@
     .icard-equal-loading {
       font-size: 12px; color: var(--text3); text-align: center; padding: 4px 0;
     }
+    /* 청약 마감 카운트다운 (경쟁률 없을 때) */
+    .icard-closing-cd {
+      padding: 4px 0 8px;
+    }
+    .icard-cd-label {
+      font-size: 11px; color: var(--text3); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+    }
+    .icard-cd-boxes {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    }
+    .icard-cd-box {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; flex: 1;
+    }
+    .icard-cd-num {
+      font-size: 24px; font-weight: 800; color: var(--primary-light);
+      line-height: 1; font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+    .icard-cd-unit {
+      font-size: 10px; color: var(--text3); margin-top: 3px;
+    }
+    .icard-cd-sep {
+      font-size: 18px; font-weight: 700; color: var(--text3); flex-shrink: 0;
+    }
     @media (max-width: 600px) {
       .ongoing-cards.single .icard-body { grid-template-columns: 1fr; }
       .ongoing-cards.single .icard-rate-section { border-right: none; border-bottom: 1px solid var(--border); }
@@ -1479,15 +1506,22 @@ function buildOngoingCards(data) {
               실시간 청약 경쟁률
             </span>
           </div>
-          <div class="icard-rate-value ${rc}">
-            ${d.rate ? d.rate.toLocaleString() + ':1' : '집계 중...'}
-          </div>
-          <div class="icard-bar-wrap">
-            <div class="icard-bar-bg">
-              <div class="icard-bar-fill ${rc}" style="width:${bw}%"></div>
-            </div>
-          </div>
-          <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')}</div>
+          ${d.rate
+            ? `<div class="icard-rate-value ${rc}">${d.rate.toLocaleString()}:1</div>
+               <div class="icard-bar-wrap"><div class="icard-bar-bg"><div class="icard-bar-fill ${rc}" style="width:${bw}%"></div></div></div>
+               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')}</div>`
+            : `<div class="icard-closing-cd" id="${cardId}-closing">
+                 <div class="icard-cd-label">청약 마감까지</div>
+                 <div class="icard-cd-boxes">
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-h">--</span><span class="icard-cd-unit">시간</span></div>
+                   <span class="icard-cd-sep">:</span>
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-m">--</span><span class="icard-cd-unit">분</span></div>
+                   <span class="icard-cd-sep">:</span>
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-s">--</span><span class="icard-cd-unit">초</span></div>
+                 </div>
+                 <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00</div>
+               </div>`
+          }
         </div>`;
 
       const footerSection = `
@@ -1722,6 +1756,40 @@ function renderReturnsTable(items) {
   </table>`;
 }
 
+const cardCdTimers = {};
+
+function startCardCountdowns(data) {
+  // 기존 타이머 정리
+  Object.values(cardCdTimers).forEach(t => clearInterval(t));
+  Object.keys(cardCdTimers).forEach(k => delete cardCdTimers[k]);
+
+  data.filter(d => !d.rate && d.date_end).forEach(d => {
+    const cardId = 'card-' + (d.no || d.name.replace(/\s/g,''));
+    // 마감일 16:00 KST 기준
+    const endMs = new Date(d.date_end + 'T16:00:00+09:00').getTime();
+
+    function tick() {
+      const diff = endMs - Date.now();
+      const hEl = document.getElementById(cardId + '-h');
+      const mEl = document.getElementById(cardId + '-m');
+      const sEl = document.getElementById(cardId + '-s');
+      if (!hEl) { clearInterval(cardCdTimers[cardId]); return; }
+      if (diff <= 0) {
+        hEl.textContent = '00'; mEl.textContent = '00'; sEl.textContent = '00';
+        clearInterval(cardCdTimers[cardId]); return;
+      }
+      const totalH = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      hEl.textContent = String(totalH).padStart(2, '0');
+      mEl.textContent = String(m).padStart(2, '0');
+      sEl.textContent = String(s).padStart(2, '0');
+    }
+    tick();
+    cardCdTimers[cardId] = setInterval(tick, 1000);
+  });
+}
+
 function startCountdown(targetMs) {
   if (cdTimer) clearInterval(cdTimer);
   function tick() {
@@ -1881,6 +1949,7 @@ function render() {
   const panelOg = document.getElementById('panel-ongoing');
   panelOg.innerHTML = buildOngoingCards(og);
   og.forEach(d => loadEqualSection(d));
+  setTimeout(() => startCardCountdowns(og), 0);
 
   const panelNw = document.getElementById('panel-new');
   if (!panelNw.querySelector('table')) panelNw.innerHTML = tableShell(newThs, 'tbody-new');
