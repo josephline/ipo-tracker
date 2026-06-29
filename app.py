@@ -161,7 +161,13 @@ def scrape_detail(html: str) -> dict:
         'public_amount':  None, # 공모금액
         'general_shares': None, # 일반청약자 배정 주식수 (균등 배정 계산용)
         'sub_rate':       None, # 청약 경쟁률 (진행중 실시간)
+        'stock_code':     None, # 종목코드 (상장 후 차트 연동용)
     }
+
+    full_text = soup.get_text()
+    m = re.search(r'종목코드\s*([0-9A-Z]{6})', full_text)
+    if m:
+        result['stock_code'] = m.group(1)
 
     # ── 증권사별 배정 테이블 (인수회사|주식수|청약한도|기타) ──
     # 헤더 행에 '인수회사'+'주식수' 둘 다 있고, 전체 행 수가 적은 테이블을 찾는다
@@ -376,6 +382,47 @@ def api_returns():
     try:
         results = asyncio.run(fetch_all())
         resp = jsonify(list(results))
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Cache-Control'] = 'no-cache'
+        return resp
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/ipos/today-listed')
+def api_today_listed():
+    """오늘 신규 상장한 종목의 현재가·종목코드 반환 (실시간 차트 연동용)"""
+    async def fetch_all():
+        data = await get_data()
+        today_str = today_kst().strftime('%Y.%m.%d')
+        cutoff = today_kst() - timedelta(days=14)
+        # 최근 2주 내 마감된 종목만 후보로 검사 (전체 마감 종목 전부 fetch하면 너무 느림)
+        candidates = [
+            x for x in data['closed']
+            if x.get('no') and x.get('date_end') and date.fromisoformat(x['date_end']) >= cutoff
+        ]
+
+        async def check(ipo):
+            detail = await get_detail(ipo['no'])
+            if detail.get('listing_date') != today_str:
+                return None
+            cp = detail.get('current_price')
+            return {
+                'no':            ipo['no'],
+                'name':          ipo['name'],
+                'market':        ipo['market'],
+                'offer_price':   ipo['price'],
+                'current_price': int(cp) if cp else None,
+                'stock_code':    detail.get('stock_code'),
+                'rate':          ipo['rate'],
+            }
+
+        results = await asyncio.gather(*[check(x) for x in candidates])
+        return [r for r in results if r]
+
+    try:
+        results = asyncio.run(fetch_all())
+        resp = jsonify(results)
         resp.headers['Access-Control-Allow-Origin'] = '*'
         resp.headers['Cache-Control'] = 'no-cache'
         return resp
