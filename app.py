@@ -296,10 +296,22 @@ async def get_data() -> dict:
 
 # ── 상세 API ──────────────────────────────────────────────────────────────────
 
+def _listed_but_no_price(data: dict) -> bool:
+    """상장일이 지났는데 현재가가 아직 없으면 캐시를 신뢰하지 않음 (상장 직후 시세 반영 지연 대응)"""
+    listing = data.get('listing_date')
+    if not listing or data.get('current_price'):
+        return False
+    try:
+        listing_date = datetime.strptime(listing, '%Y.%m.%d').date()
+    except Exception:
+        return False
+    return listing_date <= today_kst()
+
+
 async def get_detail(no: str) -> dict:
     now = time.time()
     cached = DETAIL_CACHE.get(no)
-    if cached and now - cached['ts'] < DETAIL_CACHE_TTL:
+    if cached and now - cached['ts'] < DETAIL_CACHE_TTL and not _listed_but_no_price(cached['data']):
         return cached['data']
 
     html   = await fetch_page(DETAIL_URL.format(no=no))
