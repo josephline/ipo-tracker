@@ -353,6 +353,22 @@ def api_ipos():
         return jsonify({'error': str(e)}), 500
 
 
+async def fetch_naver_price(code: str):
+    """네이버 금융 API로 실시간 현재가 조회"""
+    try:
+        url = f'https://m.stock.naver.com/api/stock/{code}/basic'
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+            if r.status_code == 200:
+                j = r.json()
+                price_str = j.get('closePrice') or j.get('currentPrice') or j.get('stockEndPrice')
+                if price_str:
+                    return int(str(price_str).replace(',', ''))
+    except Exception:
+        pass
+    return None
+
+
 @app.route('/api/ipos/returns')
 def api_returns():
     """최근 마감 인기 종목 상위 N개의 공모가 대비 현재가·수익률 반환 (병렬 fetch)"""
@@ -364,6 +380,10 @@ def api_returns():
             detail = await get_detail(ipo['no'])
             cp = detail.get('current_price')
             current = int(cp) if cp else None
+            stock_code = detail.get('stock_code')
+            # 38co.kr에 현재가 없으면 네이버 금융 API로 직접 조회
+            if not current and stock_code:
+                current = await fetch_naver_price(stock_code)
             offer   = ipo['price']
             ret_pct = round((current - offer) / offer * 100, 2) if current and offer else None
             return {
@@ -401,21 +421,6 @@ def api_today_listed():
             x for x in data['closed']
             if x.get('no') and x.get('date_end') and date.fromisoformat(x['date_end']) >= cutoff
         ]
-
-        async def fetch_naver_price(code: str):
-            """네이버 금융 API로 실시간 현재가 조회"""
-            try:
-                url = f'https://m.stock.naver.com/api/stock/{code}/basic'
-                async with httpx.AsyncClient(timeout=5) as client:
-                    r = await client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
-                    if r.status_code == 200:
-                        j = r.json()
-                        price_str = j.get('closePrice') or j.get('currentPrice') or j.get('stockEndPrice')
-                        if price_str:
-                            return int(str(price_str).replace(',', ''))
-            except Exception:
-                pass
-            return None
 
         async def check(ipo):
             detail = await get_detail(ipo['no'])
