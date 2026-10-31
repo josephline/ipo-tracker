@@ -1194,6 +1194,108 @@
       .summary-inner { gap: 12px; }
       .summary-value { font-size: 16px; }
     }
+
+    /* ── 모바일 최적화 ── */
+    html { -webkit-text-size-adjust: 100%; }
+    body { overflow-x: hidden; }
+    .m-date { display: none; font-size: 11px; color: var(--text3); margin-top: 3px; white-space: nowrap; }
+    .status-badge { white-space: nowrap; }
+    @media (max-width: 640px) {
+      .m-date { display: block; }
+      .status-badge { padding: 3px 7px; font-size: 11px; }
+      .rate-cell { min-width: 0; }
+      .rate-value { font-size: 14px; }
+      .company-cell { gap: 8px; min-width: 0; }
+      .company-logo { width: 32px; height: 32px; font-size: 11px; }
+      .company-name { font-size: 13px; word-break: keep-all; }
+      header { padding: 0 12px; }
+      .header-inner { height: 54px; gap: 8px; }
+      .logo { font-size: 15px; gap: 8px; white-space: nowrap; min-width: 0; }
+      .logo-icon { width: 28px; height: 28px; flex-shrink: 0; }
+      .header-right { gap: 8px; flex-shrink: 0; }
+      .live-dot, .source-badge, .update-time { display: none; }
+      header .lineblock-badge { padding: 6px 9px; font-size: 0; gap: 0; }
+      header .lineblock-badge svg { width: 16px; height: 16px; }
+      footer a, .site-footer a { padding: 4px 0; }
+
+      .summary-bar { padding: 12px; }
+      .summary-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; }
+      .summary-divider { display: none; }
+      .summary-label { font-size: 10px; }
+      .summary-value { font-size: 15px; }
+
+      .tabs-wrap, .filter-bar, .table-wrap { padding-left: 12px; padding-right: 12px; }
+      .tabs-wrap { margin-top: 16px; }
+      .tabs { width: 100%; }
+      .tab { flex: 1; justify-content: center; padding: 9px 4px; font-size: 13px; gap: 4px; white-space: nowrap; }
+      .tab .cnt { padding: 1px 5px; font-size: 10px; }
+      .filter-bar { gap: 8px; }
+      .filter-left { width: 100%; }
+      .search-box { flex: 1; min-width: 0; }
+      .search-box input { width: 100%; min-width: 0; font-size: 16px; }
+      .sort-select { font-size: 14px; flex-shrink: 0; }
+      .filter-right { width: 100%; }
+
+      .no-ongoing { padding: 8px 0 24px; }
+      .ongoing-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .today-listed-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .recent-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .recent-card { padding: 12px; }
+      .rc-name { max-width: 90px; }
+      .bottom-sections { padding-left: 12px; padding-right: 12px; }
+
+      .icard-header, .cd-header { padding: 14px 14px 10px; }
+      .icard-rate-section { padding: 12px 14px; }
+      .icard-footer, .ongoing-cards.single .icard-footer { padding: 12px 8px; grid-template-columns: 1fr 1px 1fr 1px 1fr; }
+      .icard-stat { padding: 0 3px; }
+      .icard-stat-value { font-size: 13px; }
+      .icard-rate-value { font-size: 26px; }
+      .icard-cd-boxes { gap: 4px; }
+      .icard-cd-box { padding: 8px 2px; min-width: 0; }
+      .icard-cd-num { font-size: 20px; }
+      .icard-cd-sep { font-size: 14px; }
+      .icard-equal-section { padding: 12px 14px; }
+
+      .cd-timer-section { padding: 14px; }
+      .cd-boxes { gap: 4px; }
+      .cd-box { padding: 8px 2px; min-width: 0; }
+      .cd-num { font-size: 22px; }
+      .cd-sep { font-size: 16px; padding-bottom: 0; }
+      .cd-stats-section { padding: 12px 8px; }
+      .cd-detail-section { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 12px 8px; }
+      .cd-detail-item:last-child { display: block; }
+      .cd-detail-item { padding: 0 4px; }
+      .cd-detail-value { font-size: 13px; }
+
+      .ret-table thead th:nth-child(2), .ret-table tbody td:nth-child(2),
+      .ret-table thead th:nth-child(5), .ret-table tbody td:nth-child(5),
+      .ret-table thead th:nth-child(6), .ret-table tbody td:nth-child(6) { display: none; }
+      .ret-badge { font-size: 12px; padding: 3px 8px; white-space: nowrap; }
+      .ret-current { font-size: 13px; white-space: nowrap; }
+      .ret-offer { font-size: 10px; white-space: nowrap; }
+      .ret-table .company-name { word-break: keep-all; }
+      .ret-table thead th, .ret-table tbody td, .skel-row td { padding: 10px 6px; }
+      .ret-table .company-cell { gap: 8px; }
+      .ret-table .company-logo { width: 30px; height: 30px; font-size: 11px; }
+      .ret-table .company-name { font-size: 13px; }
+      .ipo-table thead th, .ipo-table tbody td { padding: 12px 8px; }
+
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal { max-width: none; max-height: 92vh; border-radius: 16px 16px 0 0; }
+      .modal-header { padding: 18px 16px 12px; }
+      .modal-body { padding: 16px; }
+      .modal-name { font-size: 18px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .broker-table th, .broker-table td { padding: 8px 6px; font-size: 12px; }
+      .min-deposit-main { flex-wrap: wrap; gap: 4px 10px; }
+      .min-deposit-value { font-size: 20px; }
+      .min-deposit-scale { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .scale-item { min-width: 0; }
+      .scale-v { white-space: nowrap; }
+
+      .site-footer, footer { padding: 20px 12px; }
+      .footer-inner { gap: 8px 12px; }
+    }
   </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
@@ -1953,6 +2055,7 @@ function buildNewRows(data) {
           <div>
             <div class="company-name">${escHtml(d.name)}</div>
             <div class="company-sector">${exchangeBadge(d.market)}</div>
+            <div class="m-date">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
           </div>
         </div>
       </td>
@@ -1980,6 +2083,7 @@ function buildClosedRows(data) {
         <div>
           <div class="company-name">${escHtml(d.name)}</div>
           <div class="company-sector">${exchangeBadge(d.market)}</div>
+          <div class="m-date">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)}</div>
         </div>
       </div>
     </td>

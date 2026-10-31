@@ -389,7 +389,7 @@ async function homePage(request, env) {
     const block = homeLinksBlock(await getData());
     const text = await res.text();
     const out = block ? text.replace('</body>', `${block}\n</body>`) : text;
-    return html(out, 200, 180);
+    return html(out, 200, 0);
   } catch {
     return env.ASSETS.fetch(request);
   }

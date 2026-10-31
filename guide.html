@@ -76,6 +76,15 @@
     .footer-link:hover{color:var(--primary);}
     .footer-text{font-size:12px;color:var(--text3);}
     @media(max-width:600px){.page-title{font-size:22px;}.feature-grid{grid-template-columns:1fr;}}
+    @media(max-width:640px){
+      header{padding:0 14px;position:static;}
+      .header-inner{height:auto;flex-wrap:wrap;padding:10px 0 4px;row-gap:4px;}
+      .logo{font-size:16px;white-space:nowrap;}
+      .header-right{width:100%;overflow-x:auto;gap:18px;padding-bottom:8px;scrollbar-width:none;}
+      .header-right::-webkit-scrollbar{display:none;}
+      .nav-link{white-space:nowrap;font-size:14px;padding:6px 0;flex-shrink:0;}
+      .theme-toggle{flex-shrink:0;margin-left:auto;}
+    }
   </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
