@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ipo-tracker-ympc.onrender.com/sitemap.xml
+Sitemap: https://ipo-tracker.josephline1160.workers.dev/sitemap.xml
