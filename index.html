@@ -1561,9 +1561,13 @@ function abbr(name) {
   return name.replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
 }
 
+function ipoAttr(o) {
+  return JSON.stringify(o).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
 function escHtml(s) {
   if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -1718,7 +1722,7 @@ function renderHero() {
       <div class="week-strip">${week.map(d => {
         const dd = dday(d.date_start);
         const dep = minDepositAmt(d);
-        return `<div class="week-chip" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+        return `<div class="week-chip" onclick='openModal(${ipoAttr(d)})'>
           <div class="wc-top"><span class="wc-name">${escHtml(d.name)}</span>${dd ? `<span class="wc-dd">${dd.label}</span>` : ''}</div>
           <div class="wc-date">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)} · ${d.market === 'kospi' ? '코스피' : '코스닥'}</div>
           <div class="wc-dep">${dep ? '최소 ' + fmtMoney(dep) : '공모가 미정'}</div>
@@ -1811,7 +1815,7 @@ function buildOngoingCards(data) {
         ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${detailSection}${equalSection}`
         : `${rateSection}${footerSection}${detailSection}`;
 
-      return `<div class="ipo-card" id="${cardId}" style="--card-accent:${accent}" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+      return `<div class="ipo-card" id="${cardId}" style="--card-accent:${accent}" onclick='openModal(${ipoAttr(d)})'>
         <div class="icard-header">
           <div class="icard-logo">${escHtml(abbr(d.name))}</div>
           <div class="icard-info">
@@ -1951,7 +1955,7 @@ function loadRecentCards() {
   el.innerHTML = top5.map(d => {
     const rc = rateClass(d.rate);
     const bw = barWidth(d.rate);
-    return `<div class="recent-card" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+    return `<div class="recent-card" onclick='openModal(${ipoAttr(d)})'>
       <div class="rc-header">
         <div class="rc-name">${escHtml(d.name)}</div>
         ${exchangeBadge(d.market)}
@@ -2009,7 +2013,7 @@ function renderReturnsTable(items) {
       ${waiting.map(d => {
         const ipo = [...allData.closed, ...allData.ongoing].find(x => x.no === d.no) || { ...d, status: 'closed' };
         const ld = d.listing_date ? d.listing_date.split('.').slice(1).map(Number).join('/') : '일정 미정';
-        return `<span class="ul-chip" onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'><b>${escHtml(d.name)}</b> · 상장 ${ld}</span>`;
+        return `<span class="ul-chip" onclick='openModal(${ipoAttr(ipo)})'><b>${escHtml(d.name)}</b> · 상장 ${ld}</span>`;
       }).join('')}
     </div>` : '';
 
@@ -2027,7 +2031,7 @@ function renderReturnsTable(items) {
     const offerLabel   = d.offer_price   ? d.offer_price.toLocaleString() + '원'   : '—';
     const ipo = [...allData.closed, ...allData.ongoing].find(x => x.no === d.no) || { ...d, status: 'closed' };
 
-    return `<tr onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'>
+    return `<tr onclick='openModal(${ipoAttr(ipo)})'>
       <td>
         <div class="company-cell">
           <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -2120,7 +2124,7 @@ function startCountdown(targetMs) {
 
 function buildOngoingRows(data) {
   if (!data.length) return buildOngoingEmpty();
-  return data.map(d => `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+  return data.map(d => `<tr onclick='openModal(${ipoAttr(d)})'>
     <td>
       <div class="company-cell">
         <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -2149,7 +2153,7 @@ function buildNewRows(data) {
   if (!data.length) return emptyRow('예정된 공모주가 없습니다');
   return data.map(d => {
     const dd = d.date_start ? dday(d.date_start) : null;
-    return `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+    return `<tr onclick='openModal(${ipoAttr(d)})'>
       <td>
         <div class="company-cell">
           <div class="company-logo">${escHtml(abbr(d.name))}</div>
@@ -2177,7 +2181,7 @@ function buildNewRows(data) {
 
 function buildClosedRows(data) {
   if (!data.length) return emptyRow('마감된 공모주가 없습니다');
-  return data.map(d => `<tr onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+  return data.map(d => `<tr onclick='openModal(${ipoAttr(d)})'>
     <td>
       <div class="company-cell">
         <div class="company-logo">${escHtml(abbr(d.name))}</div>
