@@ -1229,6 +1229,34 @@
     .nx-eq b { font-size: 16px; font-weight: 800; color: var(--primary-light); }
     .nx-btn { align-self: flex-start; background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
     .nx-btn:hover { background: var(--primary-light); }
+    .nx-left { position: relative; overflow: hidden; }
+    .nx-left > * { position: relative; z-index: 1; }
+    .nx-left::after { content: ''; position: absolute; z-index: 0; width: 320px; height: 320px; top: -90px; left: -80px; border-radius: 50%; background: radial-gradient(circle, rgba(123,138,245,0.28) 0%, rgba(91,106,240,0.10) 45%, transparent 70%); pointer-events: none; animation: nxGlow 9s ease-in-out infinite alternate; }
+    @keyframes nxGlow { from { transform: translate(0, 0) scale(1); opacity: .75; } to { transform: translate(140px, 90px) scale(1.25); opacity: 1; } }
+    .cd-num.tick { animation: nxTick .35s ease-out; }
+    @keyframes nxTick { 0% { transform: scale(1.14); } 100% { transform: scale(1); } }
+    .nx-prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .nx-prog-fill { height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); transition: width 1s linear; position: relative; overflow: hidden; }
+    .nx-prog-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); transform: translateX(-100%); animation: nxShine 2.8s ease-in-out infinite; }
+    @keyframes nxShine { to { transform: translateX(100%); } }
+    .nx-prog-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 6px; }
+    .nx-tl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: relative; padding-top: 2px; }
+    .nx-tl::before { content: ''; position: absolute; top: 9px; left: 12.5%; right: 12.5%; height: 2px; background: var(--border); z-index: 0; }
+    .nx-tl-step { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; position: relative; }
+    .nx-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); position: relative; z-index: 1; }
+    .nx-tl-name { font-size: 12px; font-weight: 700; color: var(--text2); }
+    .nx-tl-date { font-size: 11px; color: var(--text3); white-space: nowrap; }
+    .nx-tl-step.done .nx-dot { background: var(--primary); border-color: var(--primary); }
+    .nx-tl-step.done .nx-tl-name { color: var(--text3); }
+    .nx-tl-step.active .nx-dot, .nx-tl-step.next .nx-dot { background: var(--primary-light); border-color: var(--primary-light); animation: nxPulse 1.8s ease-out infinite; }
+    .nx-tl-step.active .nx-dot { background: var(--ongoing); border-color: var(--ongoing); }
+    .nx-tl-step.active .nx-tl-name, .nx-tl-step.next .nx-tl-name { color: var(--text); }
+    .nx-tl-step.next .nx-tl-date, .nx-tl-step.active .nx-tl-date { color: var(--primary-light); font-weight: 700; }
+    @keyframes nxPulse { 0% { box-shadow: 0 0 0 0 rgba(123,138,245,0.65); } 70% { box-shadow: 0 0 0 9px rgba(123,138,245,0); } 100% { box-shadow: 0 0 0 0 rgba(123,138,245,0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .nx-left::after, .nx-dot, .cd-num.tick, .nx-prog-fill::after { animation: none !important; }
+      .nx-prog-fill { transition: none; }
+    }
     @media (max-width: 760px) {
       .nx-card { grid-template-columns: minmax(0, 1fr); }
       .nx-left { border-right: none; border-bottom: 1px solid var(--border); padding: 18px 14px 16px; }
@@ -1645,6 +1673,7 @@ function buildOngoingEmpty() {
 
 function buildNextCard(next) {
   const startMs = new Date(next.date_start + 'T09:00:00+09:00');
+  nxFromMs = startMs.getTime() - 7 * 86400000;
   setTimeout(() => startCountdown(startMs), 0);
   setTimeout(() => loadCountdownDetail(next), 0);
 
@@ -1677,7 +1706,12 @@ function buildNextCard(next) {
             <span class="cd-sep">:</span>
             <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
           </div>
+          <div class="nx-prog">
+            <div class="nx-prog-bar"><div class="nx-prog-fill" id="nx-prog-fill"></div></div>
+            <div class="nx-prog-labels"><span id="nx-prog-from">7일 전</span><span>청약 시작</span></div>
+          </div>
           <div class="nx-when"><b>${fmtDate(next.date_start)}(${wd}) 09:00</b> 청약 시작 · ${fmtDate(next.date_end)} 16:00 마감</div>
+          <div class="nx-tl" id="nx-timeline"></div>
         </div>
 
         <div class="nx-right">
@@ -1698,6 +1732,47 @@ function buildNextCard(next) {
     </div>`;
 }
 
+function parseDotRange(str) {
+  if (!str) return null;
+  const m = String(str).match(/(\d{4})\.(\d{2})\.(\d{2})(?:\s*~\s*(?:(\d{4})\.)?(\d{2})\.(\d{2}))?/);
+  if (!m) return null;
+  const a = `${m[1]}-${m[2]}-${m[3]}`;
+  const b = m[5] ? `${m[4] || m[1]}-${m[5]}-${m[6]}` : a;
+  return [a, b];
+}
+
+function renderNextTimeline(next, detail) {
+  const el = document.getElementById('nx-timeline');
+  if (!el) return;
+  const sc = detail.schedule || {};
+  const steps = [
+    ['수요예측', parseDotRange(sc['수요예측일'])],
+    ['청약', parseDotRange(sc['청약일']) || [next.date_start, next.date_end]],
+    ['납입', parseDotRange(sc['납입일'])],
+    ['상장', parseDotRange(sc['상장일'] || detail.listing_date)],
+  ];
+  const t = today();
+  let nextMarked = false;
+  const md = iso => { const [, m, d] = iso.split('-'); return `${+m}/${+d}`; };
+  el.innerHTML = steps.map(([name, r]) => {
+    let cls = 'future', label = '미정';
+    if (r) {
+      label = r[0] === r[1] ? md(r[0]) : `${md(r[0])}~${md(r[1])}`;
+      if (r[1] < t) cls = 'done';
+      else if (r[0] <= t) cls = 'active';
+      else if (!nextMarked) { cls = 'next'; nextMarked = true; }
+    }
+    return `<div class="nx-tl-step ${cls}"><span class="nx-dot"></span><span class="nx-tl-name">${name}</span><span class="nx-tl-date">${label}</span></div>`;
+  }).join('');
+
+  const dem = steps[0][1];
+  if (dem) {
+    nxFromMs = new Date(dem[1] + 'T16:00:00+09:00').getTime();
+    const f = document.getElementById('nx-prog-from');
+    if (f) f.textContent = `수요예측 종료 ${md(dem[1])}`;
+  }
+}
+
 function loadCountdownDetail(next) {
   if (!next.no) return;
   const el = document.getElementById('cd-detail-body');
@@ -1711,6 +1786,7 @@ function loadCountdownDetail(next) {
       if (detail.institutional) html += item('기관 경쟁률', detail.institutional, 'var(--primary-light)');
       if (detail.lockup) html += item('의무보유확약', detail.lockup, 'var(--ongoing)');
       el.innerHTML = html;
+      renderNextTimeline(next, detail);
 
       const eq = document.getElementById('nx-equal');
       if (eq && detail.general_shares) {
@@ -1910,6 +1986,7 @@ function loadEqualSection(d) {
 }
 
 let cdTimer = null;
+let nxFromMs = null;
 let returnsLoaded = false;
 let todayListedTimer = null;
 
@@ -2131,7 +2208,12 @@ function startCountdown(targetMs) {
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     const el = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = String(v).padStart(2,'0'); };
+    const prevS = document.getElementById('cd-s');
+    const changed = prevS && prevS.textContent !== String(s).padStart(2,'0');
     el('cd-d', d); el('cd-h', h); el('cd-m', m); el('cd-s', s);
+    if (changed) { prevS.classList.remove('tick'); void prevS.offsetWidth; prevS.classList.add('tick'); }
+    const fill = document.getElementById('nx-prog-fill');
+    if (fill && nxFromMs) fill.style.width = Math.min(100, Math.max(0, (Date.now() - nxFromMs) / (targetMs - nxFromMs) * 100)).toFixed(1) + '%';
   }
   tick();
   cdTimer = setInterval(tick, 1000);
