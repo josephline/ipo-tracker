@@ -1203,7 +1203,40 @@
 
     .hero-wrap { max-width: 1200px; margin: 20px auto 0; padding: 0 24px; }
     .hero-card { margin-bottom: 4px; }
-    .hero-card .countdown-card { margin-bottom: 0; }
+    .nx-card { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; position: relative; cursor: pointer; transition: border-color .2s; }
+    .nx-card:hover { border-color: var(--primary); }
+    .nx-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); z-index: 1; }
+    .nx-left { padding: 24px 22px 20px; background: var(--surface2); border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+    .nx-head { display: flex; align-items: center; gap: 12px; }
+    .nx-title { flex: 1; min-width: 0; }
+    .nx-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nx-left .cd-box { background: var(--surface); }
+    .nx-when { font-size: 12px; color: var(--text2); }
+    .nx-when b { color: var(--text); font-weight: 700; }
+    .nx-right { padding: 22px; display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+    .nx-deposit { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+    .nx-dep-label { font-size: 12px; color: var(--text3); font-weight: 600; margin-bottom: 4px; }
+    .nx-dep-value { font-size: 32px; font-weight: 900; color: var(--ongoing); line-height: 1.1; }
+    .nx-dep-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+    .nx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .nx-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; min-width: 0; }
+    .nx-k { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+    .nx-v { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nx-eq-title { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+    .nx-eq-row { display: flex; gap: 8px; }
+    .nx-eq { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; text-align: center; }
+    .nx-eq span { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+    .nx-eq b { font-size: 16px; font-weight: 800; color: var(--primary-light); }
+    .nx-btn { align-self: flex-start; background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .nx-btn:hover { background: var(--primary-light); }
+    @media (max-width: 760px) {
+      .nx-card { grid-template-columns: minmax(0, 1fr); }
+      .nx-left { border-right: none; border-bottom: 1px solid var(--border); padding: 18px 14px 16px; }
+      .nx-right { padding: 16px 14px; }
+      .nx-name { font-size: 18px; }
+      .nx-dep-value { font-size: 28px; }
+      .nx-btn { align-self: stretch; text-align: center; }
+    }
     .hero-kicker { font-size: 12px; font-weight: 700; color: var(--primary-light); margin-bottom: 8px; letter-spacing: 0.3px; }
     .week-title { font-size: 13px; font-weight: 700; color: var(--text2); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
     .week-title .pill { font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--badge-new); color: var(--new); }
@@ -1618,64 +1651,48 @@ function buildNextCard(next) {
   const dep = minDepositAmt(next);
   const daysUntil = Math.ceil((startMs - Date.now()) / 86400000);
   const soonLabel = daysUntil <= 1 ? 'D-DAY' : `D-${daysUntil}`;
+  const wd = ['일','월','화','수','목','금','토'][new Date(next.date_start + 'T12:00:00+09:00').getUTCDay()];
+  const priceLabel = next.price ? next.price.toLocaleString() + '원' : (next.price_range || '미확정');
+  const priceName = next.price ? '확정 공모가' : '희망 공모가';
 
   return `
     <div class="hero-card">
       <div class="hero-kicker">다음 청약 예정</div>
-      <div class="countdown-card">
-        <div class="countdown-glow"></div>
-        <div class="cd-header">
-          <div class="cd-logo">${escHtml(abbr(next.name))}</div>
-          <div class="cd-info">
-            <div class="cd-name">${escHtml(next.name)}</div>
-            <div class="cd-badges">
-              ${exchangeBadge(next.market)}
-              ${next.underwriter ? `<span>${escHtml(next.underwriter)}</span>` : ''}
+      <div class="nx-card" onclick='openModal(${ipoAttr(next)})'>
+        <div class="nx-left">
+          <div class="nx-head">
+            <div class="cd-logo">${escHtml(abbr(next.name))}</div>
+            <div class="nx-title">
+              <div class="nx-name">${escHtml(next.name)}</div>
+              <div class="cd-badges">${exchangeBadge(next.market)}${next.underwriter ? `<span>${escHtml(next.underwriter)}</span>` : ''}</div>
             </div>
+            <div class="cd-soon-tag">${escHtml(soonLabel)}</div>
           </div>
-          <div class="cd-soon-tag">${escHtml(soonLabel)}</div>
+          <div class="cd-boxes" id="cdBoxes">
+            <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
+          </div>
+          <div class="nx-when"><b>${fmtDate(next.date_start)}(${wd}) 09:00</b> 청약 시작 · ${fmtDate(next.date_end)} 16:00 마감</div>
         </div>
 
-        <div class="cd-body">
-          <div class="cd-timer-section">
-            <div class="cd-timer-label">
-              <span class="cd-timer-dot"></span>
-              청약 시작까지
-            </div>
-            <div class="cd-boxes" id="cdBoxes">
-              <div class="cd-box"><span class="cd-num highlight" id="cd-d">--</span><span class="cd-label">일</span></div>
-              <span class="cd-sep">:</span>
-              <div class="cd-box"><span class="cd-num" id="cd-h">--</span><span class="cd-label">시간</span></div>
-              <span class="cd-sep">:</span>
-              <div class="cd-box"><span class="cd-num" id="cd-m">--</span><span class="cd-label">분</span></div>
-              <span class="cd-sep">:</span>
-              <div class="cd-box"><span class="cd-num" id="cd-s">--</span><span class="cd-label">초</span></div>
-            </div>
+        <div class="nx-right">
+          <div class="nx-deposit">
+            <div class="nx-dep-label">최소 청약 증거금</div>
+            <div class="nx-dep-value">${dep ? fmtMoney(dep) : '미확정'}</div>
+            <div class="nx-dep-sub">10주 청약 · 증거금 50%${next.price ? '' : ' · 희망가 상단 기준'}</div>
           </div>
-
-          <div class="cd-stats-section">
-            <div class="icard-stat">
-              <div class="icard-stat-label">희망 공모가</div>
-              <div class="icard-stat-value" style="font-size:12px">${escHtml(next.price_range || '미확정')}</div>
-              <div class="icard-stat-sub">희망가 범위</div>
-            </div>
-            <div class="icard-vdivider"></div>
-            <div class="icard-stat">
-              <div class="icard-stat-label">최소 증거금</div>
-              <div class="icard-stat-value green">${dep ? fmtMoney(dep) : '미확정'}</div>
-              <div class="icard-stat-sub">10주 · 50%</div>
-            </div>
-            <div class="icard-vdivider"></div>
-            <div class="icard-stat">
-              <div class="icard-stat-label">청약 기간</div>
-              <div class="icard-stat-value" style="font-size:12px">${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</div>
-              <div class="icard-stat-sub">${escHtml(next.underwriter || '—')}</div>
-            </div>
+          <div class="nx-grid">
+            <div class="nx-item"><div class="nx-k">${priceName}</div><div class="nx-v">${escHtml(priceLabel)}</div></div>
+            <div class="nx-item"><div class="nx-k">청약 기간</div><div class="nx-v">${fmtDate(next.date_start)} ~ ${fmtDate(next.date_end)}</div></div>
+            <span id="cd-detail-body" style="display:contents"></span>
           </div>
-        </div>
-
-        <div class="cd-detail-section" id="cd-detail-body">
-          <div class="cd-detail-loading" style="grid-column:1/-1">수요예측 결과 불러오는 중...</div>
+          <div class="nx-equal" id="nx-equal"></div>
+          <button class="nx-btn" type="button">상세 · 증권사별 배정 보기 →</button>
         </div>
       </div>
     </div>`;
@@ -1688,37 +1705,35 @@ function loadCountdownDetail(next) {
   fetch(`/api/ipos/${next.no}/detail`)
     .then(r => r.json())
     .then(detail => {
-      const inst = detail.institutional || '—';
-      const lockup = detail.lockup || '—';
-      const listing = detail.listing_date || '—';
-      el.innerHTML = `
-        <div class="cd-detail-item">
-          <div class="cd-detail-label">기관 경쟁률</div>
-          <div class="cd-detail-value" style="color:var(--primary-light)">${escHtml(inst)}</div>
-          <div class="cd-detail-sub">수요예측 결과</div>
-        </div>
-        <div class="cd-detail-item">
-          <div class="cd-detail-label">의무보유확약</div>
-          <div class="cd-detail-value" style="color:var(--ongoing)">${escHtml(lockup)}</div>
-          <div class="cd-detail-sub">기관 확약 비율</div>
-        </div>
-        <div class="cd-detail-item">
-          <div class="cd-detail-label">상장 예정일</div>
-          <div class="cd-detail-value">${escHtml(listing)}</div>
-          <div class="cd-detail-sub">코스닥 상장</div>
-        </div>`;
+      const item = (k, v, color) => `<div class="nx-item"><div class="nx-k">${k}</div><div class="nx-v"${color ? ` style="color:${color}"` : ''}>${escHtml(v)}</div></div>`;
+      let html = '';
+      if (detail.listing_date) html += item('상장 예정일', detail.listing_date);
+      if (detail.institutional) html += item('기관 경쟁률', detail.institutional, 'var(--primary-light)');
+      if (detail.lockup) html += item('의무보유확약', detail.lockup, 'var(--ongoing)');
+      el.innerHTML = html;
+
+      const eq = document.getElementById('nx-equal');
+      if (eq && detail.general_shares) {
+        const pool = Math.floor(detail.general_shares * 0.5);
+        const pills = [10000, 30000, 100000].map(n => {
+          const sh = Math.floor(pool / n);
+          return `<div class="nx-eq"><span>${n / 10000}만명 참여</span><b>${sh > 0 ? sh + '주' : '추첨'}</b></div>`;
+        }).join('');
+        eq.innerHTML = `<div class="nx-eq-title">균등배정 예상 (일반청약 ${detail.general_shares.toLocaleString()}주 기준)</div><div class="nx-eq-row">${pills}</div>`;
+      }
     })
-    .catch(() => { if (el) el.innerHTML = '<div class="cd-detail-loading" style="grid-column:1/-1">수요예측 정보 없음</div>'; });
+    .catch(() => {});
 }
 
 function renderHero() {
   const el = document.getElementById('nextHero');
   if (!el) return;
-  const week = thisWeekUpcoming();
+  const heroNext = !allData.ongoing.length && allData.new.length ? allData.new[0] : null;
+  const week = thisWeekUpcoming().filter(d => !heroNext || d.no !== heroNext.no);
   let html = '';
-  if (!allData.ongoing.length && allData.new.length) html += buildNextCard(allData.new[0]);
+  if (heroNext) html += buildNextCard(heroNext);
   if (week.length) {
-    html += `<div class="week-title">이번 주 청약 예정 <span class="pill">${week.length}</span></div>
+    html += `<div class="week-title">${heroNext ? '이 외 이번 주 청약 예정' : '이번 주 청약 예정'} <span class="pill">${week.length}</span></div>
       <div class="week-strip">${week.map(d => {
         const dd = dday(d.date_start);
         const dep = minDepositAmt(d);
