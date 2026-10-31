@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ipo-tracker.josephline1160.workers.dev/sitemap.xml
+Sitemap: https://gongmoju.pages.dev/sitemap.xml

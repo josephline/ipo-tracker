@@ -11,3 +11,4 @@ scrape_result.txt
 node_modules/
 .wrangler/
 wrangler_dev.log
+dist/

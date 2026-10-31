@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ipo-tracker.josephline1160.workers.dev/</loc>
+    <loc>https://gongmoju.pages.dev/</loc>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ipo-tracker.josephline1160.workers.dev/guide</loc>
+    <loc>https://gongmoju.pages.dev/guide</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ipo-tracker.josephline1160.workers.dev/about</loc>
+    <loc>https://gongmoju.pages.dev/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ipo-tracker.josephline1160.workers.dev/privacy</loc>
+    <loc>https://gongmoju.pages.dev/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://ipo-tracker.josephline1160.workers.dev/contact</loc>
+    <loc>https://gongmoju.pages.dev/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

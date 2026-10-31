@@ -377,6 +377,12 @@ export default {
       const m = /^\/api\/ipos\/(\d+)\/detail$/.exec(path);
       if (m) return json(await getDetail(m[1]));
       if (path.startsWith('/api/')) return json({ error: 'not found' }, 404);
+      // 사이트 소유확인 파일은 .html 경로 그대로 200으로 응답해야 함 (Pages의 .html 리다이렉트 방지)
+      const v = /^\/((?:google|naver)[0-9a-f]+)\.html$/.exec(path);
+      if (v) {
+        const r = await env.ASSETS.fetch(new Request(`${url.origin}/${v[1]}`));
+        return new Response(r.body, { status: r.status, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      }
     } catch (e) {
       return json({ error: String(e && e.message ? e.message : e) }, 500);
     }
