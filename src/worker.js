@@ -1,6 +1,7 @@
 // 공모주 청약률 Cloudflare Worker (app.py 이식)
 // 데이터 출처: 38커뮤니케이션 (www.38.co.kr)
 import { parse } from 'node-html-parser';
+import { renderIpoPage, renderNotFound, renderSchedule, renderSitemap, homeLinksBlock } from './pages.js';
 
 const CACHE_TTL = 180;
 const DETAIL_CACHE_TTL = 600;
@@ -366,11 +367,47 @@ async function apiTodayListed() {
   return json(out.filter(Boolean));
 }
 
+const html = (body, status = 200, maxAge = 300) =>
+  new Response(body, {
+    status,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}` },
+  });
+
+async function ipoPage(no) {
+  const data = await getData();
+  const ipo = [...data.ongoing, ...data.new, ...data.closed].find((x) => x.no === no);
+  if (!ipo) return html(renderNotFound(), 404, 60);
+  const detail = await getDetail(no);
+  const current = ipo.status === 'new' ? null : await currentPriceOf(detail);
+  return html(renderIpoPage(ipo, detail, current));
+}
+
+async function homePage(request, env) {
+  const res = await env.ASSETS.fetch(request);
+  if (!res.ok || !(res.headers.get('Content-Type') || '').includes('text/html')) return res;
+  try {
+    const block = homeLinksBlock(await getData());
+    const text = await res.text();
+    const out = block ? text.replace('</body>', `${block}\n</body>`) : text;
+    return html(out, 200, 180);
+  } catch {
+    return env.ASSETS.fetch(request);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {
+      if (path === '/') return await homePage(request, env);
+      if (path === '/schedule') return html(renderSchedule(await getData(), todayKst()));
+      if (path === '/sitemap.xml')
+        return new Response(renderSitemap(await getData(), todayKst()), {
+          headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+        });
+      const ip = /^\/ipo\/(\d+)\/?$/.exec(path);
+      if (ip) return await ipoPage(ip[1]);
       if (path === '/api/ipos') return await apiIpos(url);
       if (path === '/api/ipos/returns') return await apiReturns();
       if (path === '/api/ipos/today-listed') return await apiTodayListed();
