@@ -1195,6 +1195,34 @@
       .summary-value { font-size: 16px; }
     }
 
+    /* ── 상단 메뉴 / 다음 청약 영역 ── */
+    .main-nav { display: flex; align-items: center; gap: 22px; margin: 0 auto 0 32px; }
+    .main-nav a { font-size: 14px; font-weight: 600; color: var(--text2); text-decoration: none; padding: 6px 0; white-space: nowrap; border-bottom: 2px solid transparent; }
+    .main-nav a:hover { color: var(--primary-light); }
+    .main-nav a.active { color: var(--text); border-bottom-color: var(--primary); }
+
+    .hero-wrap { max-width: 1200px; margin: 20px auto 0; padding: 0 24px; }
+    .hero-card { margin-bottom: 4px; }
+    .hero-card .countdown-card { margin-bottom: 0; }
+    .hero-kicker { font-size: 12px; font-weight: 700; color: var(--primary-light); margin-bottom: 8px; letter-spacing: 0.3px; }
+    .week-title { font-size: 13px; font-weight: 700; color: var(--text2); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .week-title .pill { font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--badge-new); color: var(--new); }
+    .week-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+    .week-chip { flex: 0 0 auto; width: 188px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: border-color .2s, transform .2s; }
+    .week-chip:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .wc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .wc-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wc-dd { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(91,106,240,0.15); color: var(--primary-light); flex-shrink: 0; }
+    .wc-date { font-size: 12px; color: var(--text2); margin-top: 6px; }
+    .wc-dep { font-size: 11px; color: var(--ongoing); margin-top: 2px; font-weight: 600; }
+    .ongoing-none { text-align: center; padding: 36px 16px; color: var(--text2); font-size: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; margin: 16px 0; }
+    .ongoing-none b { color: var(--text); }
+    .upcoming-listing { margin-top: 12px; font-size: 12px; color: var(--text3); line-height: 1.9; }
+    .upcoming-listing .ul-title { font-weight: 700; color: var(--text2); margin-bottom: 4px; }
+    .ul-chip { display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 3px 11px; margin: 0 6px 6px 0; color: var(--text2); cursor: pointer; }
+    .ul-chip:hover { border-color: var(--primary); }
+    .ul-chip b { color: var(--text); font-weight: 600; }
+
     /* ── 모바일 최적화 ── */
     html { -webkit-text-size-adjust: 100%; }
     body { overflow-x: hidden; }
@@ -1208,8 +1236,14 @@
       .company-cell { gap: 8px; min-width: 0; }
       .company-logo { width: 32px; height: 32px; font-size: 11px; }
       .company-name { font-size: 13px; word-break: keep-all; }
-      header { padding: 0 12px; }
-      .header-inner { height: 54px; gap: 8px; }
+      header { padding: 0 12px; position: static; }
+      .header-inner { height: auto; min-height: 54px; gap: 0 8px; flex-wrap: wrap; }
+      .logo, .header-right { height: 54px; }
+      .main-nav { order: 3; width: 100%; margin: 0; gap: 22px; overflow-x: auto; scrollbar-width: none; padding: 0; border-top: 1px solid var(--border); }
+      .main-nav::-webkit-scrollbar { display: none; }
+      .main-nav a { padding: 11px 0; font-size: 14px; flex-shrink: 0; }
+      .hero-wrap { padding: 0 12px; margin-top: 14px; }
+      .week-chip { width: 164px; padding: 10px 12px; }
       .logo { font-size: 15px; gap: 8px; white-space: nowrap; min-width: 0; }
       .logo-icon { width: 28px; height: 28px; flex-shrink: 0; }
       .header-right { gap: 8px; flex-shrink: 0; }
@@ -1310,6 +1344,12 @@
       <img class="logo-icon" src="/icon-192.png" alt="로고" />
       공모주 청약 현황
     </div>
+    <nav class="main-nav" aria-label="주요 메뉴">
+      <a href="/" class="active">홈</a>
+      <a href="/schedule">청약 일정</a>
+      <a href="/calendar">캘린더</a>
+      <a href="/guide">이용 가이드</a>
+    </nav>
     <div class="header-right">
       <span class="live-dot">실시간</span>
       <span class="source-badge">출처: 38커뮤니케이션</span>
@@ -1333,31 +1373,33 @@
 <div class="summary-bar">
   <div class="summary-inner">
     <div class="summary-card">
-      <span class="summary-label">진행중</span>
+      <span class="summary-label">청약 진행 중</span>
       <span class="summary-value ongoing" id="sumOngoing">—</span>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-card">
-      <span class="summary-label">신규·예정</span>
-      <span class="summary-value new-clr" id="sumNew">—</span>
+      <span class="summary-label">오늘 마감</span>
+      <span class="summary-value up" id="sumEnding">—</span>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-card">
-      <span class="summary-label">최고 청약률</span>
-      <span class="summary-value up" id="sumTop">—</span>
+      <span class="summary-label">이번 주 청약 예정</span>
+      <span class="summary-value new-clr" id="sumWeek">—</span>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-card">
-      <span class="summary-label">평균 청약률</span>
+      <span class="summary-label">오늘 상장</span>
+      <span class="summary-value" style="color:var(--primary-light)" id="sumListed">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-card">
+      <span class="summary-label">최근 마감 평균 경쟁률</span>
       <span class="summary-value" style="color:var(--text2)" id="sumAvg">—</span>
-    </div>
-    <div class="summary-divider"></div>
-    <div class="summary-card">
-      <span class="summary-label">마감 (최근)</span>
-      <span class="summary-value" style="color:var(--text)" id="sumClosed">—</span>
     </div>
   </div>
 </div>
+
+<div class="hero-wrap" id="nextHero" style="display:none"></div>
 
 <div class="table-wrap" id="todayListedWrap" style="display:none">
   <div class="today-listed-block">
@@ -1375,7 +1417,7 @@
       진행중 <span class="cnt" id="cnt-ongoing">—</span>
     </button>
     <button class="tab t-new" onclick="switchTab('new')">
-      신규·예정 <span class="cnt" id="cnt-new">—</span>
+      청약 예정 <span class="cnt" id="cnt-new">—</span>
     </button>
     <button class="tab t-closed" onclick="switchTab('closed')">
       마감 <span class="cnt" id="cnt-closed">—</span>
@@ -1470,11 +1512,23 @@ function minDepositLabel(ipo) {
 
 let allData = { ongoing: [], new: [], closed: [] };
 let currentTab = 'ongoing';
+let tabInitDone = false;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10); // KST
+}
+
+function addDaysIso(iso, n) {
+  return new Date(Date.parse(iso) + n * 86400000).toISOString().slice(0, 10);
+}
+
+function thisWeekUpcoming() {
+  const t = today(), end = addDaysIso(t, 7);
+  return allData.new
+    .filter(d => d.date_start && d.date_start >= t && d.date_start <= end)
+    .sort((a, b) => a.date_start.localeCompare(b.date_start));
 }
 
 function fmtDate(iso) {
@@ -1546,10 +1600,14 @@ function rateCell(rate, endIso, showDday) {
 
 function buildOngoingEmpty() {
   const next = allData.new[0];
-  if (!next) {
-    return `<div class="no-ongoing" style="text-align:center;padding:48px 0;color:var(--text3);font-size:14px">현재 진행 중인 공모주가 없습니다.</div>`;
-  }
-  const startMs = new Date(next.date_start + 'T09:00:00');
+  return `<div class="ongoing-none">
+    <b>지금 청약 진행 중인 공모주가 없습니다.</b><br>
+    ${next ? `다음 청약은 <b>${escHtml(next.name)}</b> (${fmtDate(next.date_start)} 시작)입니다.` : '예정된 청약이 등록되면 이곳에 표시됩니다.'}
+  </div>`;
+}
+
+function buildNextCard(next) {
+  const startMs = new Date(next.date_start + 'T09:00:00+09:00');
   setTimeout(() => startCountdown(startMs), 0);
   setTimeout(() => loadCountdownDetail(next), 0);
 
@@ -1558,7 +1616,8 @@ function buildOngoingEmpty() {
   const soonLabel = daysUntil <= 1 ? 'D-DAY' : `D-${daysUntil}`;
 
   return `
-    <div class="no-ongoing">
+    <div class="hero-card">
+      <div class="hero-kicker">다음 청약 예정</div>
       <div class="countdown-card">
         <div class="countdown-glow"></div>
         <div class="cd-header">
@@ -1646,6 +1705,28 @@ function loadCountdownDetail(next) {
         </div>`;
     })
     .catch(() => { if (el) el.innerHTML = '<div class="cd-detail-loading" style="grid-column:1/-1">수요예측 정보 없음</div>'; });
+}
+
+function renderHero() {
+  const el = document.getElementById('nextHero');
+  if (!el) return;
+  const week = thisWeekUpcoming();
+  let html = '';
+  if (!allData.ongoing.length && allData.new.length) html += buildNextCard(allData.new[0]);
+  if (week.length) {
+    html += `<div class="week-title">이번 주 청약 예정 <span class="pill">${week.length}</span></div>
+      <div class="week-strip">${week.map(d => {
+        const dd = dday(d.date_start);
+        const dep = minDepositAmt(d);
+        return `<div class="week-chip" onclick='openModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+          <div class="wc-top"><span class="wc-name">${escHtml(d.name)}</span>${dd ? `<span class="wc-dd">${dd.label}</span>` : ''}</div>
+          <div class="wc-date">${fmtDate(d.date_start)} ~ ${fmtDate(d.date_end)} · ${d.market === 'kospi' ? '코스피' : '코스닥'}</div>
+          <div class="wc-dep">${dep ? '최소 ' + fmtMoney(dep) : '공모가 미정'}</div>
+        </div>`;
+      }).join('')}</div>`;
+  }
+  el.innerHTML = html;
+  el.style.display = html ? '' : 'none';
 }
 
 function buildOngoingCards(data) {
@@ -1817,6 +1898,8 @@ function loadTodayListed() {
   fetch('/api/ipos/today-listed')
     .then(r => r.json())
     .then(list => {
+      const sl = document.getElementById('sumListed');
+      if (sl) sl.textContent = Array.isArray(list) ? list.length : 0;
       const wrap = document.getElementById('todayListedWrap');
       const cards = document.getElementById('todayListedCards');
       if (!wrap || !cards) return;
@@ -1849,7 +1932,7 @@ function loadTodayListed() {
         </div>`;
       }).join('');
     })
-    .catch(() => {});
+    .catch(() => { const sl = document.getElementById('sumListed'); if (sl && sl.textContent === '—') sl.textContent = '0'; });
 
   if (!todayListedTimer) {
     todayListedTimer = setInterval(() => loadTodayListed(), 30000);
@@ -1917,7 +2000,25 @@ function renderReturnsTable(items) {
     return;
   }
 
-  const rows = items.map(d => {
+  const listed = items.filter(d => d.current_price != null && d.return_pct != null);
+  const waiting = items.filter(d => !(d.current_price != null && d.return_pct != null))
+    .sort((a, b) => (a.listing_date || '9').localeCompare(b.listing_date || '9'));
+
+  const waitingHtml = waiting.length ? `<div class="upcoming-listing">
+      <div class="ul-title">상장 대기 중 (${waiting.length})</div>
+      ${waiting.map(d => {
+        const ipo = [...allData.closed, ...allData.ongoing].find(x => x.no === d.no) || { ...d, status: 'closed' };
+        const ld = d.listing_date ? d.listing_date.split('.').slice(1).map(Number).join('/') : '일정 미정';
+        return `<span class="ul-chip" onclick='openModal(${JSON.stringify(ipo).replace(/'/g,"&#39;")})'><b>${escHtml(d.name)}</b> · 상장 ${ld}</span>`;
+      }).join('')}
+    </div>` : '';
+
+  if (!listed.length) {
+    el.innerHTML = `<p style="color:var(--text3);font-size:13px;padding:8px 0">최근 상장한 종목이 아직 없습니다. 상장 후 공모가 대비 수익률이 표시됩니다.</p>${waitingHtml}`;
+    return;
+  }
+
+  const rows = listed.map(d => {
     const pct = d.return_pct;
     const cls = pct === null ? 'flat' : pct > 0 ? 'profit' : pct < 0 ? 'loss' : 'flat';
     const arrow = pct === null ? '—' : pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
@@ -1964,7 +2065,7 @@ function renderReturnsTable(items) {
       <th class="right">청약 경쟁률</th>
     </tr></thead>
     <tbody>${rows}</tbody>
-  </table>`;
+  </table>${waitingHtml}`;
 }
 
 const cardCdTimers = {};
@@ -2178,16 +2279,17 @@ function render() {
   document.getElementById('cnt-closed').textContent = allData.closed.length;
 
   // Summary stats
-  const rates = [...allData.ongoing, ...allData.closed].filter(d => d.rate).map(d => d.rate);
+  const closedRates = allData.closed.filter(d => d.rate).map(d => d.rate);
   document.getElementById('sumOngoing').textContent = allData.ongoing.length;
-  document.getElementById('sumNew').textContent = allData.new.length;
-  document.getElementById('sumClosed').textContent = allData.closed.length;
-  if (rates.length) {
-    const top = Math.max(...rates);
-    const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
-    document.getElementById('sumTop').textContent = top.toLocaleString() + ':1';
-    document.getElementById('sumAvg').textContent = avg.toFixed(0) + ':1';
-  }
+  document.getElementById('sumEnding').textContent = allData.ongoing.filter(d => d.date_end === today()).length;
+  document.getElementById('sumWeek').textContent = thisWeekUpcoming().length;
+  document.getElementById('sumAvg').textContent = closedRates.length
+    ? Math.round(closedRates.reduce((a, b) => a + b, 0) / closedRates.length).toLocaleString() + ':1'
+    : '—';
+
+  // 진행 중 탭이 비어 있으면 검색/정렬 바를 숨김
+  const emptyOngoing = currentTab === 'ongoing' && !allData.ongoing.length;
+  document.querySelector('.filter-bar').style.display = emptyOngoing ? 'none' : '';
 
   const currentCount = currentTab === 'ongoing' ? og.length : currentTab === 'new' ? nw.length : cl.length;
   document.getElementById('resultCount').textContent = `${currentCount}개 종목`;
@@ -2208,6 +2310,17 @@ async function fetchData() {
     allData.ongoing = data.ongoing || [];
     allData.new = data.new || [];
     allData.closed = data.closed || [];
+
+    if (!tabInitDone) {
+      tabInitDone = true;
+      if (!allData.ongoing.length && allData.new.length) {
+        currentTab = 'new';
+        document.querySelectorAll('.tab, .tab-panel').forEach(e => e.classList.remove('active'));
+        document.querySelector('.t-new').classList.add('active');
+        document.getElementById('panel-new').classList.add('active');
+      }
+    }
+    renderHero();
 
     document.getElementById('updateTime').textContent =
       `업데이트: ${data.updated_at ? data.updated_at.slice(11,19) : '—'}`;
