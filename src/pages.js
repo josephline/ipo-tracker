@@ -97,6 +97,7 @@ function layout({ title, desc, path, body, jsonld = [], noindex = false }) {
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4919533819542036" crossorigin="anonymous"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}" />
