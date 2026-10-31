@@ -66,6 +66,24 @@ td.r,th.r{text-align:right;}
 .list a:hover .nm{color:var(--primary-light);}
 .list .nm{font-weight:700;}
 .list .mt{font-size:13px;color:var(--text2);text-align:right;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 14px;}
+.cal-nav a{font-size:13px;text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text2);}
+.cal-nav .dis{opacity:.35;pointer-events:none;}
+.cal-nav b{font-size:18px;}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--border);border-left:1px solid var(--border);background:var(--surface);}
+.cal .dow{background:var(--surface2);font-size:12px;font-weight:700;color:var(--text2);text-align:center;padding:8px 0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.cal .dow.sun,.cal .day.sun .dn{color:var(--up);}
+.cal .dow.sat,.cal .day.sat .dn{color:var(--down);}
+.cal .day{min-height:92px;padding:6px 5px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;}
+.cal .day.out{background:var(--bg);opacity:.45;}
+.cal .day.today{box-shadow:inset 0 0 0 2px var(--primary);}
+.cal .dn{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--text2);}
+.chip{display:block;font-size:11px;line-height:1.3;padding:2px 5px;margin-bottom:3px;border-radius:4px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--surface2);color:var(--text);border-left:3px solid var(--text3);}
+.chip.ongoing{border-left-color:var(--ongoing);}
+.chip.new{border-left-color:var(--new);}
+.chip i{font-style:normal;font-size:9px;color:var(--text3);margin-right:3px;}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--text2);margin-top:10px;flex-wrap:wrap;}
+@media(max-width:600px){.cal .day{min-height:64px;padding:3px;}.chip{font-size:10px;padding:1px 3px;}.chip i{display:none;}}
 footer{border-top:1px solid var(--border);padding:24px;text-align:center;}
 .footer-inner{max-width:900px;margin:0 auto;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
 .footer-link,.footer-text{font-size:12px;color:var(--text3);text-decoration:none;}
@@ -103,6 +121,7 @@ ${jsonld.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
   <div class="header-right">
     <a href="/" class="nav-link">홈</a>
     <a href="/schedule" class="nav-link">청약 일정</a>
+    <a href="/calendar" class="nav-link">캘린더</a>
     <a href="/guide" class="nav-link">이용 가이드</a>
     <a href="/contact" class="nav-link">문의</a>
   </div>
@@ -114,6 +133,7 @@ ${body}
   <span class="footer-text">© ${SITE_NAME}</span>
   <a href="/" class="footer-link">홈</a>
   <a href="/schedule" class="footer-link">청약 일정</a>
+  <a href="/calendar" class="footer-link">월간 캘린더</a>
   <a href="/guide" class="footer-link">이용 가이드</a>
   <a href="/about" class="footer-link">사이트 소개</a>
   <a href="/privacy" class="footer-link">개인정보처리방침</a>
@@ -267,9 +287,91 @@ ${section('청약 진행 중', data.ongoing, '현재 청약이 진행 중인 종
 ${section('이번 주 청약 예정 (7일 이내)', thisWeek, '7일 이내에 청약이 시작되는 종목이 없습니다.')}
 ${section('이후 청약 예정', later, '이후 청약 예정 종목이 아직 없습니다.')}
 ${section('최근 청약 마감', data.closed, '최근 마감된 종목이 없습니다.')}
+<p style="margin-top:20px"><a href="/calendar">월간 캘린더로 보기 →</a></p>
 <div class="note">공모주 청약 일정은 증권사·발행사 사정에 따라 변경될 수 있습니다. 청약 전 해당 증권사의 공지와 공식 공시를 반드시 확인하세요.</div>`;
 
   return layout({ title, desc, path, body, jsonld: [crumbLd([['홈', '/'], ['청약 일정', path]])] });
+}
+
+// ── 월간 캘린더 ──────────────────────────────────────────────────────────────
+
+export function calendarRange(todayIso) {
+  const [y, m] = todayIso.split('-').map(Number);
+  const key = (off) => {
+    const d = new Date(Date.UTC(y, m - 1 + off, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  };
+  return { min: key(-2), max: key(3), current: key(0), shift: (ym, n) => {
+    const [yy, mm] = ym.split('-').map(Number);
+    const d = new Date(Date.UTC(yy, mm - 1 + n, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  } };
+}
+
+export function renderCalendar(data, ym, todayIso) {
+  const [y, m] = ym.split('-').map(Number);
+  const range = calendarRange(todayIso);
+  const prev = range.shift(ym, -1);
+  const next = range.shift(ym, 1);
+  const pad = (n) => String(n).padStart(2, '0');
+  const first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+  const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const all = [...data.ongoing, ...data.new, ...data.closed].filter((x) => x.date_start);
+  const inMonth = (iso) => iso.slice(0, 7) === ym;
+  const monthIpos = all
+    .filter((x) => inMonth(x.date_start) || inMonth(x.date_end || x.date_start))
+    .sort((a, b) => a.date_start.localeCompare(b.date_start));
+
+  const dow = WEEK.map((w, i) => `<div class="dow ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('');
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push('<div class="day out"></div>');
+  for (let d = 1; d <= dim; d++) {
+    const iso = `${ym}-${pad(d)}`;
+    const wd = (first + d - 1) % 7;
+    const chips = all
+      .filter((x) => x.date_start <= iso && iso <= (x.date_end || x.date_start))
+      .map((x) => {
+        const tag = iso === x.date_start && x.date_end !== x.date_start ? '시작' : iso === (x.date_end || x.date_start) ? '마감' : '';
+        const label = `${tag ? `<i>${tag}</i>` : ''}${esc(x.name)}`;
+        return x.no
+          ? `<a class="chip ${x.status}" href="/ipo/${x.no}" title="${esc(x.name)} ${STATUS[x.status]}">${label}</a>`
+          : `<span class="chip ${x.status}">${label}</span>`;
+      })
+      .join('');
+    cells.push(`<div class="day ${wd === 0 ? 'sun' : wd === 6 ? 'sat' : ''} ${iso === todayIso ? 'today' : ''}"><div class="dn">${d}</div>${chips}</div>`);
+  }
+  while (cells.length % 7) cells.push('<div class="day out"></div>');
+
+  const path = `/calendar/${ym}`;
+  const names = monthIpos.slice(0, 5).map((x) => x.name).join(', ');
+  const title = `${y}년 ${m}월 공모주 청약 캘린더 | ${SITE_NAME}`;
+  const desc = monthIpos.length
+    ? `${y}년 ${m}월 공모주 청약 일정 캘린더입니다. ${names}${monthIpos.length > 5 ? ' 등' : ''} ${monthIpos.length}개 종목의 청약 시작·마감일을 한눈에 확인하세요.`
+    : `${y}년 ${m}월 공모주 청약 일정 캘린더입니다.`;
+
+  const body = `<div class="crumb"><a href="/">홈</a> › <a href="/schedule">청약 일정</a> › 월간 캘린더</div>
+<h1>${y}년 ${m}월 공모주 청약 캘린더</h1>
+<p class="lead">${monthIpos.length ? `${m}월에는 ${monthIpos.length}개 종목의 청약이 진행되거나 예정되어 있습니다.` : `${m}월에 등록된 청약 일정이 아직 없습니다.`} 종목을 누르면 공모가, 최소 증거금, 균등배정 예상 수량을 확인할 수 있습니다.</p>
+<div class="cal-nav">
+  <a href="/calendar/${prev}" class="${prev < range.min ? 'dis' : ''}">← ${Number(prev.slice(5))}월</a>
+  <b>${y}년 ${m}월</b>
+  <a href="/calendar/${next}" class="${next > range.max ? 'dis' : ''}">${Number(next.slice(5))}월 →</a>
+</div>
+<div class="cal">${dow}${cells.join('')}</div>
+<div class="legend"><span style="color:var(--ongoing)">■ 청약 진행 중</span><span style="color:var(--new)">■ 청약 예정</span><span>■ 청약 마감</span><span>표시는 청약 기간(마감일 16시 종료)입니다.</span></div>
+<h2>${m}월 청약 종목 목록</h2>
+${monthIpos.length ? ipoList(monthIpos) : '<div class="prose"><p>등록된 종목이 없습니다.</p></div>'}
+<p style="margin-top:24px"><a href="/schedule">← 이번 주 청약 일정 보기</a></p>
+<div class="note">청약 일정은 증권사·발행사 사정에 따라 변경될 수 있습니다. 38커뮤니케이션 등 공개 자료를 자동 수집한 참고 정보이며 투자 판단은 본인 책임입니다.</div>`;
+
+  return layout({
+    title,
+    desc,
+    path,
+    body,
+    noindex: monthIpos.length === 0,
+    jsonld: [crumbLd([['홈', '/'], ['청약 일정', '/schedule'], [`${y}년 ${m}월 캘린더`, path]])],
+  });
 }
 
 // ── 사이트맵 / 홈 링크 블록 ──────────────────────────────────────────────────
@@ -281,6 +383,7 @@ export function renderSitemap(data, todayIso) {
   const entries = [
     url('/', 'hourly', '1.0', todayIso),
     url('/schedule', 'daily', '0.9', todayIso),
+    ...[...new Set(all.map((x) => x.date_start).filter(Boolean).map((d) => d.slice(0, 7)))].sort().map((ym) => url(`/calendar/${ym}`, 'daily', '0.7', todayIso)),
     url('/guide', 'monthly', '0.6'),
     url('/about', 'monthly', '0.4'),
     url('/privacy', 'yearly', '0.3'),
@@ -295,6 +398,6 @@ export function homeLinksBlock(data) {
   if (!all.length) return '';
   const links = all.map((x) => `<a href="/ipo/${x.no}" style="color:var(--text2);text-decoration:none;font-size:12px;margin:0 10px 6px 0;display:inline-block">${esc(x.name)} 청약</a>`).join('');
   return `<section aria-label="공모주 종목별 청약 정보" style="max-width:1100px;margin:24px auto 0;padding:20px 24px;border-top:1px solid var(--border)">
-<h2 style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:10px">종목별 공모주 청약 정보 · <a href="/schedule" style="color:var(--primary-light);text-decoration:none">전체 청약 일정</a></h2>
+<h2 style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:10px">종목별 공모주 청약 정보 · <a href="/schedule" style="color:var(--primary-light);text-decoration:none">전체 청약 일정</a> · <a href="/calendar" style="color:var(--primary-light);text-decoration:none">월간 캘린더</a></h2>
 <div>${links}</div></section>`;
 }

@@ -1,7 +1,7 @@
 // 공모주 청약률 Cloudflare Worker (app.py 이식)
 // 데이터 출처: 38커뮤니케이션 (www.38.co.kr)
 import { parse } from 'node-html-parser';
-import { renderIpoPage, renderNotFound, renderSchedule, renderSitemap, homeLinksBlock } from './pages.js';
+import { renderIpoPage, renderNotFound, renderSchedule, renderSitemap, homeLinksBlock, renderCalendar, calendarRange } from './pages.js';
 
 const CACHE_TTL = 180;
 const DETAIL_CACHE_TTL = 600;
@@ -406,6 +406,14 @@ export default {
         return new Response(renderSitemap(await getData(), todayKst()), {
           headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
         });
+      const cal = /^\/calendar(?:\/(\d{4}-\d{2}))?\/?$/.exec(path);
+      if (cal) {
+        const today = todayKst();
+        const range = calendarRange(today);
+        const ym = cal[1] || range.current;
+        if (ym < range.min || ym > range.max || !/^\d{4}-(0[1-9]|1[0-2])$/.test(ym)) return html(renderNotFound(), 404, 60);
+        return html(renderCalendar(await getData(), ym, today));
+      }
       const ip = /^\/ipo\/(\d+)\/?$/.exec(path);
       if (ip) return await ipoPage(ip[1]);
       if (path === '/api/ipos') return await apiIpos(url);
