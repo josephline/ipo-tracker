@@ -1098,6 +1098,17 @@
     .tl-change { font-size: 13px; font-weight: 700; }
     .tl-change.up { color: var(--up); } .tl-change.down { color: var(--down); } .tl-change.flat { color: var(--text3); }
     .tl-offer-row { padding: 0 18px 16px; font-size: 11px; color: var(--text3); }
+    .tl-price-row { align-items: center; gap: 10px; }
+    .tl-change-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .tl-change-lbl { font-size: 11px; color: var(--text3); font-weight: 600; }
+    .tl-change-pill { font-size: 15px; font-weight: 800; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
+    .tl-change-amt { font-size: 12px; font-weight: 700; }
+    .tl-change-wrap.up .tl-change-pill { background: rgba(255,87,87,0.15); color: var(--up); }
+    .tl-change-wrap.up .tl-change-amt { color: var(--up); }
+    .tl-change-wrap.down .tl-change-pill { background: rgba(61,185,255,0.15); color: var(--down); }
+    .tl-change-wrap.down .tl-change-amt { color: var(--down); }
+    .tl-change-wrap.flat .tl-change-pill { background: var(--badge-closed); color: var(--text2); }
+    .tl-change-wrap.flat .tl-change-amt { color: var(--text3); }
     .tl-chart { padding: 4px 14px 8px; min-height: 34px; }
     .tl-chart-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 14px 0; background: var(--surface2); border-radius: 10px; }
     .tl-chart-inner { color: var(--up); }
@@ -2086,7 +2097,13 @@ function loadTodayListed() {
           </div>
           <div class="tl-price-row">
             <span class="tl-price ${cls}">${priceLabel}</span>
-            <span class="tl-change ${cls}">${pct !== null ? arrow + ' ' + Math.abs(pct).toFixed(1) + '%' : ''}</span>
+            ${pct !== null
+              ? `<span class="tl-change-wrap ${cls}">
+                   <span class="tl-change-lbl">공모가 대비</span>
+                   <span class="tl-change-pill">${arrow ? arrow + ' ' : ''}${pct > 0 ? '+' : pct < 0 ? '-' : ''}${Math.abs(pct).toFixed(1)}%</span>
+                   <span class="tl-change-amt">${cur - offer > 0 ? '+' : cur - offer < 0 ? '-' : ''}${Math.abs(cur - offer).toLocaleString()}원</span>
+                 </span>`
+              : `<span class="tl-change-wrap flat"><span class="tl-change-lbl">시초가 형성 전</span></span>`}
           </div>
           <div class="tl-chart" data-code="${escHtml(d.stock_code || '')}">${tlChartCache[d.stock_code] || ''}</div>
           <div class="tl-offer-row">공모가 ${offer ? offer.toLocaleString() + '원' : '—'} · 청약경쟁률 ${d.rate ? d.rate.toLocaleString()+':1' : '—'}</div>
