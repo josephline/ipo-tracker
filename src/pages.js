@@ -159,7 +159,9 @@ export function renderIpoPage(ipo, d, current) {
   const priceFixed = !!ipo.price;
   const rate = ipo.rate || d.sub_rate;
   const subscribe = d.schedule['청약일'] || (ipo.date_start ? `${fmtDot(ipo.date_start)} ~ ${fmtDot(ipo.date_end)}` : null);
-  const minDeposit = price ? Math.round(price * 10 * 0.5) : null;
+  const minQty = ipo.min_qty || 10;
+  const qtyNote = ipo.min_qty_confirmed ? '(투자설명서 기준)' : '(최소 청약 수량 10주 가정 · 증권사 공고 확인 필요)';
+  const minDeposit = price ? Math.round(price * minQty * 0.5) : null;
   const pool = d.general_shares ? Math.floor(d.general_shares * 0.5) : null;
   const ret = current && price && priceFixed ? Math.round(((current - price) / price) * 1000) / 10 : null;
 
@@ -183,7 +185,7 @@ export function renderIpoPage(ipo, d, current) {
 
   const equal = pool
     ? `<h2>균등배정 예상 수량</h2>
-<div class="prose"><p>일반청약자 배정 물량 ${num(d.general_shares)}주의 50%(${num(pool)}주)를 균등 방식으로 배정한다고 가정했을 때, 청약 참여 인원별 1인당 예상 배정 수량입니다. 최소 청약 단위(10주)를 증거금 50%로 청약한 경우를 기준으로 합니다.</p></div>
+<div class="prose"><p>일반청약자 배정 물량 ${num(d.general_shares)}주의 50%(${num(pool)}주)를 균등 방식으로 배정한다고 가정했을 때, 청약 참여 인원별 1인당 예상 배정 수량입니다. 최소 청약 단위(${minQty}주)를 증거금 50%로 청약한 경우를 기준으로 합니다.</p></div>
 <div class="grid">${[10000, 30000, 100000, 300000]
         .map((n) => {
           const s = Math.floor(pool / n);
@@ -202,7 +204,7 @@ export function renderIpoPage(ipo, d, current) {
   const faqs = [
     [`${ipo.name} 청약일은 언제인가요?`, subscribe ? `${ipo.name}의 공모 청약 기간은 ${subscribe}입니다. 청약은 증권사별 영업시간 내에 진행되며 마감일에는 16시에 종료됩니다.` : `${ipo.name}의 청약 일정은 아직 확정되지 않았습니다.`],
     [`${ipo.name} 공모가는 얼마인가요?`, priceFixed ? `${ipo.name}의 확정 공모가는 ${num(price)}원입니다.${ipo.price_range ? ` (희망 공모가 범위 ${ipo.price_range}원)` : ''}` : `${ipo.name}의 공모가는 아직 확정되지 않았으며 희망 공모가 범위는 ${ipo.price_range || '미정'}원입니다.`],
-    [`${ipo.name} 최소 청약 증거금은 얼마인가요?`, minDeposit ? `최소 청약 단위인 10주를 청약하려면 증거금 50% 기준으로 약 ${num(minDeposit)}원이 필요합니다${priceFixed ? '' : '(희망 공모가 상단 기준 추정치)'}.` : '공모가가 확정되면 안내됩니다.'],
+    [`${ipo.name} 최소 청약 증거금은 얼마인가요?`, minDeposit ? `최소 청약 단위인 ${minQty}주${qtyNote}를 청약하려면 증거금 50% 기준으로 약 ${num(minDeposit)}원이 필요합니다${priceFixed ? '' : '(희망 공모가 상단 기준 추정치)'}.` : '공모가가 확정되면 안내됩니다.'],
     [`${ipo.name} 상장일은 언제인가요?`, d.listing_date ? `${ipo.name}의 상장 예정일은 ${d.listing_date}이며 ${mk} 시장에 상장됩니다.` : `${ipo.name}의 상장일은 아직 공개되지 않았습니다.`],
   ];
 
@@ -225,7 +227,7 @@ ${brokers}
 <h2>자주 묻는 질문</h2>
 <div class="faq">${faqs.map(([q, a]) => `<h3>${esc(q)}</h3><div class="prose"><p>${esc(a)}</p></div>`).join('')}</div>
 <p style="margin-top:28px"><a href="/schedule">← 전체 공모주 청약 일정 보기</a></p>
-<div class="note">본 페이지는 38커뮤니케이션(www.38.co.kr) 등 공개 자료를 자동 수집한 참고 정보이며, 수집 시점에 따라 지연·오류가 있을 수 있습니다. 투자 판단과 그에 따른 손익은 투자자 본인의 책임입니다. 청약 전 반드시 해당 증권사와 공식 공시(투자설명서)를 확인하세요.</div>`;
+<div class="note">최소 청약 수량은 종목·증권사마다 다를 수 있어 확인된 종목만 반영하고 나머지는 10주로 가정해 계산합니다. 본 페이지는 38커뮤니케이션(www.38.co.kr) 등 공개 자료를 자동 수집한 참고 정보이며, 수집 시점에 따라 지연·오류가 있을 수 있습니다. 투자 판단과 그에 따른 손익은 투자자 본인의 책임입니다. 청약 전 반드시 해당 증권사와 공식 공시(투자설명서)를 확인하세요.</div>`;
 
   return layout({
     title,

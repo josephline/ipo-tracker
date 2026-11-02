@@ -13,6 +13,8 @@ const HEADERS = {
   Referer: 'http://www.38.co.kr/',
 };
 const BASE_URL = 'http://www.38.co.kr/html/fund/?o=k';
+// 투자설명서 기준으로 확인된 최소 청약 수량 (38커뮤니케이션 원문에는 없음). 그 외 종목은 10주로 가정
+const MIN_QTY_CONFIRMED = { 2325: 20, 2339: 20 };
 const detailUrl = (no) => `http://www.38.co.kr/html/fund/?o=v&no=${no}`;
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────────
@@ -133,6 +135,8 @@ function scrapeIpos(html) {
     }
 
     results.push({
+      min_qty: MIN_QTY_CONFIRMED[detailNo] || 10,
+      min_qty_confirmed: !!MIN_QTY_CONFIRMED[detailNo],
       no: detailNo,
       name: nameClean,
       market,
@@ -395,6 +399,24 @@ async function homePage(request, env) {
   }
 }
 
+async function apiChart(code) {
+  const t = todayKst().replace(/-/g, '');
+  const points = await cached(`chart/${code}/${t}`, 30, async () => {
+    try {
+      const r = await fetch(
+        `https://api.stock.naver.com/chart/domestic/item/${code}/minute?startDateTime=${t}0900&endDateTime=${t}1530`,
+        { headers: { 'User-Agent': 'Mozilla/5.0' } },
+      );
+      if (!r.ok) return [];
+      const j = await r.json();
+      return Array.isArray(j) ? j.map((x) => [String(x.localDateTime).slice(8, 12), x.currentPrice]) : [];
+    } catch {
+      return [];
+    }
+  });
+  return json(points);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -419,6 +441,8 @@ export default {
       if (path === '/api/ipos') return await apiIpos(url);
       if (path === '/api/ipos/returns') return await apiReturns();
       if (path === '/api/ipos/today-listed') return await apiTodayListed();
+      const chart = /^\/api\/chart\/([0-9A-Z]{6})$/.exec(path);
+      if (chart) return await apiChart(chart[1]);
       const m = /^\/api\/ipos\/(\d+)\/detail$/.exec(path);
       if (m) return json(await getDetail(m[1]));
       if (path.startsWith('/api/')) return json({ error: 'not found' }, 404);
