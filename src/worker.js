@@ -251,6 +251,52 @@ function listedButNoPrice(d) {
 const getDetail = (no) =>
   cached(`detail/${no}`, DETAIL_CACHE_TTL, async () => scrapeDetail(await fetchPage(detailUrl(no))), (d) => !listedButNoPrice(d));
 
+const NAVER_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0' };
+const normName = (s) => String(s || '').replace(/\s|\([^)]*\)/g, '').toLowerCase();
+
+function naverIpoCodes() {
+  return cached('naver-ipo-codes', 1800, async () => {
+    try {
+      const r = await fetch('https://m.stock.naver.com/api/stocks/ipo?stockListSortType=IPO&pageSize=100', { headers: NAVER_HEADERS });
+      const j = await r.json();
+      const map = {};
+      for (const x of j.ipoCoInfos || []) map[normName(x.itemName)] = x.itemCode;
+      return map;
+    } catch {
+      return {};
+    }
+  });
+}
+
+async function naverSubscription(name) {
+  const code = (await naverIpoCodes())[normName(name)];
+  if (!code) return null;
+  return cached(`naver-sub/${code}`, 60, async () => {
+    try {
+      const r = await fetch(`https://m.stock.naver.com/ipo/${code}`, { headers: NAVER_HEADERS });
+      if (!r.ok) return null;
+      const text = (await r.text())
+        .replace(/<script[\s\S]*?<\/script>/g, ' ')
+        .replace(/<svg[\s\S]*?<\/svg>/g, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ');
+      const num = (re) => {
+        const m = re.exec(text);
+        return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+      };
+      const out = {
+        rate: num(/종합 청약 경쟁률\s*([\d,.]+)\s*:\s*1/),
+        prop_rate: num(/비례배정 경쟁률\s*([\d,.]+)\s*:\s*1/),
+        applications: num(/청약 신청건수\s*([\d,]+)\s*건/),
+      };
+      return out.rate == null && out.applications == null ? null : out;
+    } catch {
+      return null;
+    }
+  });
+}
+
 async function getData() {
   return cached('list', CACHE_TTL, async () => {
     const ipos = scrapeIpos(await fetchPage(BASE_URL));
@@ -261,12 +307,20 @@ async function getData() {
 
     ongoing = await Promise.all(
       ongoing.map(async (ipo) => {
-        if (!ipo.no) return ipo;
-        try {
-          const d = await getDetail(ipo.no);
-          if (d.sub_rate && !ipo.rate) return { ...ipo, rate: d.sub_rate, rate_raw: `${d.sub_rate}:1` };
-        } catch {}
-        return ipo;
+        let out = ipo;
+        if (ipo.no) {
+          try {
+            const d = await getDetail(ipo.no);
+            if (d.sub_rate && !out.rate) out = { ...out, rate: d.sub_rate, rate_raw: `${d.sub_rate}:1` };
+          } catch {}
+        }
+        // 청약 진행 중에도 네이버 증권에는 종합 경쟁률·비례 경쟁률·신청 건수가 올라옴
+        const nv = await naverSubscription(ipo.name);
+        if (nv) {
+          out = { ...out, prop_rate: nv.prop_rate, applications: nv.applications };
+          if (nv.rate != null && !out.rate) out = { ...out, rate: nv.rate, rate_raw: `${nv.rate}:1`, rate_src: 'naver' };
+        }
+        return out;
       }),
     );
     ongoing.sort(byRate);

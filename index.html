@@ -1000,6 +1000,8 @@
     .icard-bar-fill.primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
     .icard-bar-fill.down    { background: linear-gradient(90deg, var(--down), #6bcfff); }
     .icard-rate-end { font-size: 11px; color: var(--text3); }
+    .icard-rate-meta { display: flex; gap: 14px; font-size: 12px; color: var(--text2); margin: 6px 0 4px; }
+    .icard-rate-meta b { color: var(--text); font-weight: 700; }
 
     .icard-footer {
       display: grid;
@@ -1867,13 +1869,14 @@ function buildOngoingCards(data) {
           <div class="icard-rate-header">
             <span class="icard-rate-label">
               <span class="icard-live-dot"></span>
-              ${d.rate ? '실시간 청약 경쟁률' : '청약 진행 중'}
+              ${d.rate ? (d.date_end && Date.now() >= new Date(d.date_end + 'T16:00:00+09:00') ? '최종 청약 경쟁률' : '실시간 청약 경쟁률') : '청약 진행 중'}
             </span>
           </div>
           ${d.rate
             ? `<div class="icard-rate-value ${rc}">${d.rate.toLocaleString()}:1</div>
                <div class="icard-bar-wrap"><div class="icard-bar-bg"><div class="icard-bar-fill ${rc}" style="width:${bw}%"></div></div></div>
-               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')}</div>`
+               ${(d.prop_rate || d.applications) ? `<div class="icard-rate-meta">${d.prop_rate ? `<span>비례 <b>${d.prop_rate.toLocaleString()}:1</b></span>` : ''}${d.applications ? `<span>신청 <b>${d.applications.toLocaleString()}건</b></span>` : ''}</div>` : ''}
+               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00${d.rate_src === 'naver' ? ' · 네이버 증권 집계 기준' : ''}</div>`
             : `<div class="icard-closing-cd" id="${cardId}-closing">
                  <div class="icard-cd-label">청약 마감까지</div>
                  <div class="icard-cd-boxes">

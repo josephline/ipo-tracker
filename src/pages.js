@@ -168,7 +168,8 @@ export function renderIpoPage(ipo, d, current) {
   const items = [
     ['청약 기간', subscribe ? esc(subscribe) : '미정', fmtDate(ipo.date_start)],
     [priceFixed ? '확정 공모가' : '희망 공모가', price ? `${num(price)}원` : '미정', priceFixed ? null : esc(ipo.price_range || '')],
-    ['청약 경쟁률', rate ? `${num(rate)}:1` : '집계 전', rate ? '일반청약 기준' : null],
+    ['청약 경쟁률', rate ? `${num(rate)}:1` : '집계 전', rate ? (ipo.prop_rate ? `비례 ${num(ipo.prop_rate)}:1` : '일반청약 기준') : null],
+    ...(ipo.applications ? [['청약 신청건수', `${num(ipo.applications)}건`, '네이버 증권 집계 기준']] : []),
     ['기관 경쟁률', esc(d.institutional || '—'), '수요예측 결과'],
     ['의무보유확약', esc(d.lockup || '—'), '기관 확약 비율'],
     ['상장 예정일', esc(d.listing_date || '미정'), mk],
