@@ -1000,6 +1000,14 @@
     .icard-bar-fill.primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
     .icard-bar-fill.down    { background: linear-gradient(90deg, var(--down), #6bcfff); }
     .icard-rate-end { font-size: 11px; color: var(--text3); }
+    .eq-live { padding: 14px 18px; border-top: 1px solid var(--border); background: var(--surface2); }
+    .eq-title { font-size: 11px; color: var(--text3); font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .eq-tag { font-size: 10px; padding: 1px 8px; border-radius: 10px; background: rgba(91,106,240,0.15); color: var(--primary-light); }
+    .eq-main { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .eq-main b { color: var(--ongoing); }
+    .eq-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .eq-note { font-size: 10.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+    .modal .eq-live { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--surface2); }
     .icard-rate-meta { display: flex; gap: 14px; font-size: 12px; color: var(--text2); margin: 6px 0 4px; }
     .icard-rate-meta b { color: var(--text); font-weight: 700; }
 
@@ -1926,9 +1934,10 @@ function buildOngoingCards(data) {
           <div class="icard-equal-loading" id="${cardId}-equal-body">데이터 불러오는 중...</div>
         </div>` : '';
 
+      const eqLiveBox = `<div id="${cardId}-eqlive"></div>`;
       const bodyHtml = single
-        ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${detailSection}${equalSection}`
-        : `${rateSection}${footerSection}${detailSection}`;
+        ? `<div class="icard-body">${rateSection}<div class="icard-right">${footerSection}</div></div>${detailSection}${eqLiveBox}${equalSection}`
+        : `${rateSection}${footerSection}${detailSection}${eqLiveBox}`;
 
       return `<div class="ipo-card" id="${cardId}" style="--card-accent:${accent}" onclick='openModal(${ipoAttr(d)})'>
         <div class="icard-header">
@@ -1945,6 +1954,19 @@ function buildOngoingCards(data) {
         ${bodyHtml}
       </div>`;
     }).join('')}
+  </div>`;
+}
+
+function equalExpectHtml(d, generalShares) {
+  if (!d.applications || !generalShares) return '';
+  const pool = Math.floor(generalShares * 0.5);
+  const per = pool / d.applications;
+  const ended = d.date_end && Date.now() >= new Date(d.date_end + 'T16:00:00+09:00');
+  return `<div class="eq-live">
+    <div class="eq-title">균등배정 예상 수량 <span class="eq-tag">${ended ? '마감 기준' : '현재 신청건수 기준 · 변동 가능'}</span></div>
+    <div class="eq-main">${per >= 1 ? `약 <b>${Math.floor(per)}주</b>` : `1주 미만 · <b>추첨</b>`}</div>
+    <div class="eq-sub">균등 배정 ${pool.toLocaleString()}주 ÷ 신청 ${d.applications.toLocaleString()}건 = ${per.toFixed(2)}주${per < 1 ? ` (당첨 확률 약 ${(per * 100).toFixed(0)}%)` : ''}</div>
+    <div class="eq-note">일반청약 배정의 50%를 균등으로 나눈 추정치이며 증권사별 배정·최종 물량에 따라 달라질 수 있습니다.</div>
   </div>`;
 }
 
@@ -1979,6 +2001,10 @@ function loadEqualSection(d) {
             <div class="cd-detail-sub">${market} 상장</div>
           </div>`;
       }
+
+      // ── 신청건수 기반 균등배정 예상 ──
+      const eqLiveEl = document.getElementById(cardId + '-eqlive');
+      if (eqLiveEl) eqLiveEl.innerHTML = equalExpectHtml(d, detail.general_shares);
 
       // ── 균등 배정 예상 (single 카드만) ──
       const bodyEl = document.getElementById(cardId + '-equal-body');
@@ -2755,6 +2781,7 @@ function renderModalDetail(ipo, d) {
       }).join('');
       return `<div class="modal-section">
         <div class="modal-section-title">균등 배정 예상</div>
+        ${equalExpectHtml(ipo, gs)}
         <div class="alloc-info">일반 배정 ${gs.toLocaleString()}주 중 균등 배정 풀: <b>${pool.toLocaleString()}주</b> (50%)</div>
         <div class="alloc-list">${rows}</div>
         <div class="alloc-note">실제 배정은 청약자 수·최종 공모가에 따라 달라집니다.</div>

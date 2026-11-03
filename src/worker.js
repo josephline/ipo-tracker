@@ -268,8 +268,30 @@ function naverIpoCodes() {
   });
 }
 
+// 목록에 없는(마감된) 종목은 검색 자동완성으로 코드를 찾는다
+async function naverCodeFor(name) {
+  const n = normName(name);
+  const map = await naverIpoCodes();
+  if (map[n]) return map[n];
+  return cached(
+    `naver-code/${n}`,
+    86400,
+    async () => {
+      try {
+        const r = await fetch(`https://ac.stock.naver.com/ac?q=${encodeURIComponent(name)}&target=stock,ipo`, { headers: NAVER_HEADERS });
+        const j = await r.json();
+        const hit = (j.items || []).find((x) => x.category === 'ipo' && normName(x.name) === n);
+        return hit ? hit.code : null;
+      } catch {
+        return null;
+      }
+    },
+    (v) => v !== null,
+  );
+}
+
 async function naverSubscription(name) {
-  const code = (await naverIpoCodes())[normName(name)];
+  const code = await naverCodeFor(name);
   if (!code) return null;
   return cached(`naver-sub/${code}`, 60, async () => {
     try {
@@ -294,7 +316,7 @@ async function naverSubscription(name) {
     } catch {
       return null;
     }
-  });
+  }, (v) => v !== null);
 }
 
 async function getData() {
@@ -324,6 +346,17 @@ async function getData() {
       }),
     );
     ongoing.sort(byRate);
+
+    // 최근 7일 내 마감 종목도 네이버에서 비례 경쟁률·신청건수를 보강
+    const closedCutoff = new Date(Date.parse(todayKst()) - 7 * 86400000).toISOString().slice(0, 10);
+    const closedEnriched = await Promise.all(
+      closed.map(async (ipo) => {
+        if (!ipo.date_end || ipo.date_end < closedCutoff) return ipo;
+        const nv = await naverSubscription(ipo.name);
+        return nv ? { ...ipo, prop_rate: nv.prop_rate, applications: nv.applications } : ipo;
+      }),
+    );
+    closed.splice(0, closed.length, ...closedEnriched);
 
     return {
       ongoing,

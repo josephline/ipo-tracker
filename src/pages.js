@@ -184,8 +184,13 @@ export function renderIpoPage(ipo, d, current) {
     closed: `${ipo.name}의 청약은 마감되었습니다.${rate ? ` 최종 청약 경쟁률은 ${num(rate)}:1을 기록했습니다.` : ''}`,
   }[ipo.status];
 
+  const perApp = pool && ipo.applications ? pool / ipo.applications : null;
+  const endedNow = ipo.status === 'closed' || (ipo.date_end && Date.now() >= Date.parse(`${ipo.date_end}T16:00:00+09:00`));
+  const liveEq = perApp !== null
+    ? `<div class="card" style="margin-bottom:14px"><div class="k">청약 신청건수 ${num(ipo.applications)}건 기준 균등배정 예상 (${endedNow ? '마감 기준' : '현재 집계 · 변동 가능'})</div><div class="v">${perApp >= 1 ? `약 ${Math.floor(perApp)}주` : '1주 미만 · 추첨'}</div><div class="s">균등 배정 ${num(pool)}주 ÷ 신청 ${num(ipo.applications)}건 = ${perApp.toFixed(2)}주${perApp < 1 ? ` (당첨 확률 약 ${Math.round(perApp * 100)}%)` : ''}</div></div>`
+    : '';
   const equal = pool
-    ? `<h2>균등배정 예상 수량</h2>
+    ? `<h2>균등배정 예상 수량</h2>${liveEq}
 <div class="prose"><p>일반청약자 배정 물량 ${num(d.general_shares)}주의 50%(${num(pool)}주)를 균등 방식으로 배정한다고 가정했을 때, 청약 참여 인원별 1인당 예상 배정 수량입니다. 최소 청약 단위(${minQty}주)를 증거금 50%로 청약한 경우를 기준으로 합니다.</p></div>
 <div class="grid">${[10000, 30000, 100000, 300000]
         .map((n) => {
