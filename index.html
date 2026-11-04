@@ -1605,6 +1605,8 @@ function minDepositLabel(ipo) {
 let allData = { ongoing: [], new: [], closed: [] };
 let currentTab = 'ongoing';
 let tabInitDone = false;
+let liveAt = '';
+const generalSharesCache = {};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1855,6 +1857,37 @@ function renderHero() {
   el.style.display = html ? '' : 'none';
 }
 
+function buildRateSection(d, cardId) {
+  const rc = rateClass(d.rate);
+  const bw = barWidth(d.rate);
+  return `
+        <div class="icard-rate-section">
+          <div class="icard-rate-header">
+            <span class="icard-rate-label">
+              <span class="icard-live-dot"></span>
+              ${d.rate ? (d.date_end && Date.now() >= new Date(d.date_end + 'T16:00:00+09:00') ? '최종 청약 경쟁률' : '실시간 청약 경쟁률') : '청약 진행 중'}
+            </span>
+          </div>
+          ${d.rate
+            ? `<div class="icard-rate-value ${rc}">${d.rate.toLocaleString()}:1</div>
+               <div class="icard-bar-wrap"><div class="icard-bar-bg"><div class="icard-bar-fill ${rc}" style="width:${bw}%"></div></div></div>
+               ${(d.prop_rate || d.applications) ? `<div class="icard-rate-meta">${d.prop_rate ? `<span>비례 <b>${d.prop_rate.toLocaleString()}:1</b></span>` : ''}${d.applications ? `<span>신청 <b>${d.applications.toLocaleString()}건</b></span>` : ''}</div>` : ''}
+               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00${d.rate_src === 'naver' ? ' · 네이버 증권 집계 기준' + (liveAt ? ' · ' + liveAt + ' 갱신' : '') : ''}</div>`
+            : `<div class="icard-closing-cd" id="${cardId}-closing">
+                 <div class="icard-cd-label">청약 마감까지</div>
+                 <div class="icard-cd-boxes">
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-h">--</span><span class="icard-cd-unit">시간</span></div>
+                   <span class="icard-cd-sep">:</span>
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-m">--</span><span class="icard-cd-unit">분</span></div>
+                   <span class="icard-cd-sep">:</span>
+                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-s">--</span><span class="icard-cd-unit">초</span></div>
+                 </div>
+                 <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00</div>
+               </div>`
+          }
+        </div>`;
+}
+
 function buildOngoingCards(data) {
   if (!data.length) return buildOngoingEmpty();
 
@@ -1872,32 +1905,7 @@ function buildOngoingCards(data) {
       const accent = accentMap[rc] || 'var(--primary)';
       const cardId = 'card-' + (d.no || d.name.replace(/\s/g,''));
 
-      const rateSection = `
-        <div class="icard-rate-section">
-          <div class="icard-rate-header">
-            <span class="icard-rate-label">
-              <span class="icard-live-dot"></span>
-              ${d.rate ? (d.date_end && Date.now() >= new Date(d.date_end + 'T16:00:00+09:00') ? '최종 청약 경쟁률' : '실시간 청약 경쟁률') : '청약 진행 중'}
-            </span>
-          </div>
-          ${d.rate
-            ? `<div class="icard-rate-value ${rc}">${d.rate.toLocaleString()}:1</div>
-               <div class="icard-bar-wrap"><div class="icard-bar-bg"><div class="icard-bar-fill ${rc}" style="width:${bw}%"></div></div></div>
-               ${(d.prop_rate || d.applications) ? `<div class="icard-rate-meta">${d.prop_rate ? `<span>비례 <b>${d.prop_rate.toLocaleString()}:1</b></span>` : ''}${d.applications ? `<span>신청 <b>${d.applications.toLocaleString()}건</b></span>` : ''}</div>` : ''}
-               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00${d.rate_src === 'naver' ? ' · 네이버 증권 집계 기준' : ''}</div>`
-            : `<div class="icard-closing-cd" id="${cardId}-closing">
-                 <div class="icard-cd-label">청약 마감까지</div>
-                 <div class="icard-cd-boxes">
-                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-h">--</span><span class="icard-cd-unit">시간</span></div>
-                   <span class="icard-cd-sep">:</span>
-                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-m">--</span><span class="icard-cd-unit">분</span></div>
-                   <span class="icard-cd-sep">:</span>
-                   <div class="icard-cd-box"><span class="icard-cd-num" id="${cardId}-s">--</span><span class="icard-cd-unit">초</span></div>
-                 </div>
-                 <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00</div>
-               </div>`
-          }
-        </div>`;
+      const rateSection = buildRateSection(d, cardId);
 
       const footerSection = `
         <div class="icard-footer">
@@ -1977,6 +1985,7 @@ function loadEqualSection(d) {
   fetch(`/api/ipos/${d.no}/detail`)
     .then(r => r.json())
     .then(detail => {
+      generalSharesCache[d.no] = detail.general_shares;
       // ── 기관경쟁률 · 의무보유확약 · 상장예정일 ──
       const detailEl = document.getElementById(cardId + '-detail');
       if (detailEl) {
@@ -2520,7 +2529,15 @@ async function fetchData() {
     const res = await fetch(API);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    allData.ongoing = data.ongoing || [];
+    const prevOngoing = allData.ongoing;
+    allData.ongoing = (data.ongoing || []).map(n => {
+      const o = prevOngoing.find(x => x.no === n.no);
+      if (o && o.applications != null && (n.applications == null || o.applications > n.applications)
+          && !(n.date_end && Date.now() >= new Date(n.date_end + 'T16:00:00+09:00'))) {
+        return { ...n, rate: o.rate, prop_rate: o.prop_rate, applications: o.applications, rate_src: o.rate_src || n.rate_src };
+      }
+      return n;
+    });
     allData.new = data.new || [];
     allData.closed = data.closed || [];
 
@@ -2544,6 +2561,52 @@ async function fetchData() {
     document.getElementById('errorBanner').innerHTML =
       `<div class="error-banner">⚠️ 데이터를 불러오지 못했습니다: ${escHtml(e.message)}</div>`;
   }
+}
+
+
+// ── 진행 중 종목 경쟁률 실시간 갱신 (30초) ───────────────────────────────────
+function isSubscribing(d) {
+  return d.date_end && Date.now() < new Date(d.date_end + 'T16:00:00+09:00').getTime();
+}
+
+async function pollLive() {
+  if (document.hidden) return;
+  if (!allData.ongoing.some(isSubscribing)) return;
+  try {
+    const res = await fetch('/api/live', { cache: 'no-store' });
+    if (!res.ok) return;
+    const live = await res.json();
+    liveAt = (live.updated_at || '').slice(11, 19);
+    let needFull = false;
+    for (const it of live.items || []) {
+      const d = allData.ongoing.find(x => x.no === it.no);
+      if (!d || !isSubscribing(d)) continue;
+      if (it.rate == null && it.applications == null) continue;
+      // 신청건수는 줄어들 수 없으므로 더 작은 값은 무시
+      if (d.applications != null && it.applications != null && it.applications < d.applications) continue;
+      const hadRate = d.rate != null;
+      d.rate = it.rate ?? d.rate;
+      d.rate_raw = d.rate != null ? d.rate + ':1' : d.rate_raw;
+      d.rate_src = 'naver';
+      d.prop_rate = it.prop_rate ?? d.prop_rate;
+      d.applications = it.applications ?? d.applications;
+      const cardId = 'card-' + (d.no || d.name.replace(/\s/g, ''));
+      const card = document.getElementById(cardId);
+      if (!card) { needFull = true; continue; }
+      const rs = card.querySelector('.icard-rate-section');
+      if (rs) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = buildRateSection(d, cardId).trim();
+        rs.replaceWith(tmp.firstElementChild);
+      }
+      const eq = document.getElementById(cardId + '-eqlive');
+      if (eq) eq.innerHTML = equalExpectHtml(d, generalSharesCache[d.no]);
+      if (!hadRate && d.rate != null) needFull = true;
+    }
+    if (needFull) render();
+    const ut = document.getElementById('updateTime');
+    if (ut && liveAt) ut.textContent = `업데이트: ${liveAt}`;
+  } catch (e) { /* 다음 주기에 재시도 */ }
 }
 
 function applyFilters() { render(); }
@@ -2826,6 +2889,8 @@ function initTheme() {
 initTheme();
 fetchData();
 setInterval(fetchData, REFRESH_MS);
+setInterval(pollLive, 30000);
+pollLive();
 </script>
 
 <!-- 상세 모달 -->

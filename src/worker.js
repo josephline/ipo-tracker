@@ -290,10 +290,25 @@ async function naverCodeFor(name) {
   );
 }
 
-async function naverSubscription(name) {
+// 네이버가 서버마다 값을 번갈아 주는 경우가 있어, 신청건수는 줄어들 수 없다는 점을 이용해 더 큰 쪽을 유지
+async function mergeBest(code, fresh) {
+  const cache = caches.default;
+  const req = new Request(`https://cache.internal/naver-best/${code}`);
+  let prev = null;
+  try {
+    const hit = await cache.match(req);
+    prev = hit ? await hit.json() : null;
+  } catch {}
+  let best = fresh;
+  if (prev && prev.applications != null && (fresh.applications == null || prev.applications > fresh.applications)) best = prev;
+  await cache.put(req, new Response(JSON.stringify(best), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=86400' } }));
+  return best;
+}
+
+async function naverSubscription(name, ttl = 60) {
   const code = await naverCodeFor(name);
   if (!code) return null;
-  return cached(`naver-sub/${code}`, 60, async () => {
+  return cached(`naver-sub/${code}`, ttl, async () => {
     try {
       const r = await fetch(`https://m.stock.naver.com/ipo/${code}`, { headers: NAVER_HEADERS });
       if (!r.ok) return null;
@@ -312,11 +327,24 @@ async function naverSubscription(name) {
         prop_rate: num(/비례배정 경쟁률\s*([\d,.]+)\s*:\s*1/),
         applications: num(/청약 신청건수\s*([\d,]+)\s*건/),
       };
-      return out.rate == null && out.applications == null ? null : out;
+      if (out.rate == null && out.applications == null) return null;
+      return await mergeBest(code, out);
     } catch {
       return null;
     }
   }, (v) => v !== null);
+}
+
+// 진행 중 종목의 경쟁률만 빠르게 갱신하는 경량 API (20초 캐시)
+async function apiLive() {
+  const data = await getData();
+  const items = await Promise.all(
+    data.ongoing.map(async (ipo) => {
+      const nv = await naverSubscription(ipo.name, 20);
+      return { no: ipo.no, name: ipo.name, rate: nv?.rate ?? null, prop_rate: nv?.prop_rate ?? null, applications: nv?.applications ?? null };
+    }),
+  );
+  return json({ updated_at: kstNow().toISOString().slice(0, 19), items });
 }
 
 async function getData() {
@@ -528,6 +556,7 @@ export default {
       if (path === '/api/ipos') return await apiIpos(url);
       if (path === '/api/ipos/returns') return await apiReturns();
       if (path === '/api/ipos/today-listed') return await apiTodayListed();
+      if (path === '/api/live') return await apiLive();
       const chart = /^\/api\/chart\/([0-9A-Z]{6})$/.exec(path);
       if (chart) return await apiChart(chart[1]);
       const m = /^\/api\/ipos\/(\d+)\/detail$/.exec(path);
