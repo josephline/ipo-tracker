@@ -1872,7 +1872,7 @@ function buildRateSection(d, cardId) {
             ? `<div class="icard-rate-value ${rc}">${d.rate.toLocaleString()}:1</div>
                <div class="icard-bar-wrap"><div class="icard-bar-bg"><div class="icard-bar-fill ${rc}" style="width:${bw}%"></div></div></div>
                ${(d.prop_rate || d.applications) ? `<div class="icard-rate-meta">${d.prop_rate ? `<span>비례 <b>${d.prop_rate.toLocaleString()}:1</b></span>` : ''}${d.applications ? `<span>신청 <b>${d.applications.toLocaleString()}건</b></span>` : ''}</div>` : ''}
-               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00${d.rate_src === 'naver' ? ' · 네이버 증권 집계 기준' + (liveAt ? ' · ' + liveAt + ' 갱신' : '') : ''}</div>`
+               <div class="icard-rate-end">마감 ${escHtml(d.date_end || '—')} 16:00${d.rate_src === 'naver' ? ' · 네이버 증권 ' + (d.naver_at ? d.naver_at + ' 집계' : '집계 기준') : ''}</div>`
             : `<div class="icard-closing-cd" id="${cardId}-closing">
                  <div class="icard-cd-label">청약 마감까지</div>
                  <div class="icard-cd-boxes">
@@ -1966,8 +1966,8 @@ function buildOngoingCards(data) {
 }
 
 function equalExpectHtml(d, generalShares) {
-  if (!d.applications || !generalShares) return '';
-  const pool = Math.floor(generalShares * 0.5);
+  const pool = d.eql_shares || (generalShares ? Math.floor(generalShares * 0.5) : 0);
+  if (!d.applications || !pool) return '';
   const per = pool / d.applications;
   const ended = d.date_end && Date.now() >= new Date(d.date_end + 'T16:00:00+09:00');
   return `<div class="eq-live">
@@ -2534,7 +2534,7 @@ async function fetchData() {
       const o = prevOngoing.find(x => x.no === n.no);
       if (o && o.applications != null && (n.applications == null || o.applications > n.applications)
           && !(n.date_end && Date.now() >= new Date(n.date_end + 'T16:00:00+09:00'))) {
-        return { ...n, rate: o.rate, prop_rate: o.prop_rate, applications: o.applications, rate_src: o.rate_src || n.rate_src };
+        return { ...n, rate: o.rate, prop_rate: o.prop_rate, applications: o.applications, eql_shares: o.eql_shares || n.eql_shares, naver_at: o.naver_at || n.naver_at, rate_src: o.rate_src || n.rate_src };
       }
       return n;
     });
@@ -2590,6 +2590,8 @@ async function pollLive() {
       d.rate_src = 'naver';
       d.prop_rate = it.prop_rate ?? d.prop_rate;
       d.applications = it.applications ?? d.applications;
+      d.eql_shares = it.eql_shares ?? d.eql_shares;
+      d.naver_at = it.naver_at ?? d.naver_at;
       const cardId = 'card-' + (d.no || d.name.replace(/\s/g, ''));
       const card = document.getElementById(cardId);
       if (!card) { needFull = true; continue; }

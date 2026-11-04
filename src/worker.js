@@ -308,37 +308,44 @@ async function mergeBest(code, fresh) {
 async function naverSubscription(name, ttl = 60) {
   const code = await naverCodeFor(name);
   if (!code) return null;
-  return cached(`naver-sub/${code}`, ttl, async () => {
-    try {
-      const r = await fetch(`https://m.stock.naver.com/ipo/${code}`, { headers: NAVER_HEADERS });
-      if (!r.ok) return null;
-      const text = (await r.text())
-        .replace(/<script[\s\S]*?<\/script>/g, ' ')
-        .replace(/<svg[\s\S]*?<\/svg>/g, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/\s+/g, ' ');
-      const num = (re) => {
-        const m = re.exec(text);
-        return m ? parseFloat(m[1].replace(/,/g, '')) : null;
-      };
-      const out = {
-        rate: num(/종합 청약 경쟁률\s*([\d,.]+)\s*:\s*1/),
-        prop_rate: num(/비례배정 경쟁률\s*([\d,.]+)\s*:\s*1/),
-        applications: num(/청약 신청건수\s*([\d,]+)\s*건/),
-      };
-      // 38커뮤니케이션 반영이 늦는 항목(기관경쟁률·확정공모가·상장일) 보충용
-      const inst = /기관경쟁률\s*([\d,.]+)\s*:\s*1/.exec(text);
-      const lst = /환불\s*[\d.\s]*?상장\s*(\d{4})\.\s*(\d{2})\.\s*(\d{2})/.exec(text);
-      out.institutional = inst ? `${inst[1]}:1` : null;
-      out.confirmed_price = num(/확정공모가\s*([\d,]+)\s*원/);
-      out.listing_date = lst ? `${lst[1]}.${lst[2]}.${lst[3]}` : null;
-      if (Object.values(out).every((v) => v == null)) return null;
-      return await mergeBest(code, out);
-    } catch {
-      return null;
-    }
-  }, (v) => v !== null);
+  return cached(
+    `naver-sub/${code}`,
+    ttl,
+    async () => {
+      try {
+        const r = await fetch(`https://m.stock.naver.com/front-api/ipo/detail?code=${code}`, { headers: NAVER_HEADERS });
+        if (!r.ok) return null;
+        const x = (await r.json()).result;
+        if (!x) return null;
+        const jm = x.joinManagers || [];
+        const sum = (k) => jm.reduce((acc, m) => acc + (m[k] || 0), 0);
+        const weight = (m) => (m.orgEqlShares || 0) + (m.orgPrtShares || 0);
+        const wavg = (key) => {
+          const ms = jm.filter((m) => m[key] != null);
+          const tw = ms.reduce((acc, m) => acc + weight(m), 0);
+          return ms.length && tw ? Math.round((ms.reduce((acc, m) => acc + m[key] * weight(m), 0) / tw) * 100) / 100 : null;
+        };
+        const demand = x.demandForecastingResult || {};
+        const lcal = x.ipoInfo?.lcalDate;
+        const out = {
+          rate: x.confirmedInfo?.fnlCmptRatio ?? wavg('ttlCmptRatio'),
+          prop_rate: jm.length === 1 ? jm[0].prtCmptRatio ?? null : wavg('prtCmptRatio'),
+          applications: jm.some((m) => m.sbscNum != null) ? sum('sbscNum') : null,
+          eql_shares: sum('orgEqlShares') || null,
+          min_qty: jm.length ? Math.max(...jm.map((m) => m.sbscMinNum || 0)) || null : null,
+          updated_at: jm.map((m) => m.updtTm).filter(Boolean).sort().pop() || null,
+          institutional: demand.cmptnRate ? `${Number(demand.cmptnRate).toLocaleString('en-US')}:1` : null,
+          confirmed_price: demand.fixPubPrice || null,
+          listing_date: lcal ? lcal.replace(/-/g, '.') : null,
+        };
+        if (Object.values(out).every((v) => v == null)) return null;
+        return await mergeBest(code, out);
+      } catch {
+        return null;
+      }
+    },
+    (v) => v !== null,
+  );
 }
 
 // 진행 중 종목의 경쟁률만 빠르게 갱신하는 경량 API (20초 캐시)
@@ -347,10 +354,19 @@ async function apiLive() {
   const items = await Promise.all(
     data.ongoing.map(async (ipo) => {
       const nv = await naverSubscription(ipo.name, 20);
-      return { no: ipo.no, name: ipo.name, rate: nv?.rate ?? null, prop_rate: nv?.prop_rate ?? null, applications: nv?.applications ?? null };
+      return { no: ipo.no, name: ipo.name, rate: nv?.rate ?? null, prop_rate: nv?.prop_rate ?? null, applications: nv?.applications ?? null, eql_shares: nv?.eql_shares ?? null, naver_at: nv?.updated_at ? nv.updated_at.slice(11, 16) : null };
     }),
   );
   return json({ updated_at: kstNow().toISOString().slice(0, 19), items });
+}
+
+function naverFields(nv) {
+  const f = { prop_rate: nv.prop_rate, applications: nv.applications, eql_shares: nv.eql_shares, naver_at: nv.updated_at ? nv.updated_at.slice(11, 16) : null };
+  if (nv.min_qty) {
+    f.min_qty = nv.min_qty;
+    f.min_qty_confirmed = true;
+  }
+  return f;
 }
 
 async function getData() {
@@ -373,7 +389,7 @@ async function getData() {
         // 청약 진행 중에도 네이버 증권에는 종합 경쟁률·비례 경쟁률·신청 건수가 올라옴
         const nv = await naverSubscription(ipo.name);
         if (nv) {
-          out = { ...out, prop_rate: nv.prop_rate, applications: nv.applications };
+          out = { ...out, ...naverFields(nv) };
           if (!out.price && nv.confirmed_price) out = { ...out, price: nv.confirmed_price };
           if (nv.rate != null && !out.rate) out = { ...out, rate: nv.rate, rate_raw: `${nv.rate}:1`, rate_src: 'naver' };
         }
@@ -382,13 +398,28 @@ async function getData() {
     );
     ongoing.sort(byRate);
 
+    // 7일 이내 청약 예정 종목은 네이버에서 최소 청약 수량·확정 공모가를 보강
+    const soonCutoff = new Date(Date.parse(todayKst()) + 7 * 86400000).toISOString().slice(0, 10);
+    const nextEnriched = await Promise.all(
+      next.map(async (ipo) => {
+        if (!ipo.date_start || ipo.date_start > soonCutoff) return ipo;
+        const nv = await naverSubscription(ipo.name, 600);
+        if (!nv) return ipo;
+        let o = { ...ipo };
+        if (nv.min_qty) { o.min_qty = nv.min_qty; o.min_qty_confirmed = true; }
+        if (!o.price && nv.confirmed_price) o.price = nv.confirmed_price;
+        return o;
+      }),
+    );
+    next.splice(0, next.length, ...nextEnriched);
+
     // 최근 7일 내 마감 종목도 네이버에서 비례 경쟁률·신청건수를 보강
     const closedCutoff = new Date(Date.parse(todayKst()) - 7 * 86400000).toISOString().slice(0, 10);
     const closedEnriched = await Promise.all(
       closed.map(async (ipo) => {
         if (!ipo.date_end || ipo.date_end < closedCutoff) return ipo;
         const nv = await naverSubscription(ipo.name);
-        return nv ? { ...ipo, prop_rate: nv.prop_rate, applications: nv.applications } : ipo;
+        return nv ? { ...ipo, ...naverFields(nv) } : ipo;
       }),
     );
     closed.splice(0, closed.length, ...closedEnriched);
