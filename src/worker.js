@@ -327,7 +327,13 @@ async function naverSubscription(name, ttl = 60) {
         prop_rate: num(/비례배정 경쟁률\s*([\d,.]+)\s*:\s*1/),
         applications: num(/청약 신청건수\s*([\d,]+)\s*건/),
       };
-      if (out.rate == null && out.applications == null) return null;
+      // 38커뮤니케이션 반영이 늦는 항목(기관경쟁률·확정공모가·상장일) 보충용
+      const inst = /기관경쟁률\s*([\d,.]+)\s*:\s*1/.exec(text);
+      const lst = /환불\s*[\d.\s]*?상장\s*(\d{4})\.\s*(\d{2})\.\s*(\d{2})/.exec(text);
+      out.institutional = inst ? `${inst[1]}:1` : null;
+      out.confirmed_price = num(/확정공모가\s*([\d,]+)\s*원/);
+      out.listing_date = lst ? `${lst[1]}.${lst[2]}.${lst[3]}` : null;
+      if (Object.values(out).every((v) => v == null)) return null;
       return await mergeBest(code, out);
     } catch {
       return null;
@@ -368,6 +374,7 @@ async function getData() {
         const nv = await naverSubscription(ipo.name);
         if (nv) {
           out = { ...out, prop_rate: nv.prop_rate, applications: nv.applications };
+          if (!out.price && nv.confirmed_price) out = { ...out, price: nv.confirmed_price };
           if (nv.rate != null && !out.rate) out = { ...out, rate: nv.rate, rate_raw: `${nv.rate}:1`, rate_src: 'naver' };
         }
         return out;
@@ -492,11 +499,33 @@ const html = (body, status = 200, maxAge = 300) =>
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}` },
   });
 
+// 38커뮤니케이션에 아직 없는 기관경쟁률·상장일은 네이버 증권에서 보충
+async function getDetailFull(no) {
+  const d = await getDetail(no);
+  if (d.institutional && d.listing_date) return d;
+  try {
+    const data = await getData();
+    const ipo = [...data.ongoing, ...data.new, ...data.closed].find((x) => x.no === no);
+    if (!ipo) return d;
+    const nv = await naverSubscription(ipo.name, 120);
+    if (!nv) return d;
+    const out = { ...d, schedule: { ...d.schedule } };
+    if (!out.institutional && nv.institutional) out.institutional = nv.institutional;
+    if (!out.listing_date && nv.listing_date) {
+      out.listing_date = nv.listing_date;
+      out.schedule['상장일'] = nv.listing_date;
+    }
+    return out;
+  } catch {
+    return d;
+  }
+}
+
 async function ipoPage(no) {
   const data = await getData();
   const ipo = [...data.ongoing, ...data.new, ...data.closed].find((x) => x.no === no);
   if (!ipo) return html(renderNotFound(), 404, 60);
-  const detail = await getDetail(no);
+  const detail = await getDetailFull(no);
   const current = ipo.status === 'new' ? null : await currentPriceOf(detail);
   return html(renderIpoPage(ipo, detail, current));
 }
@@ -560,7 +589,7 @@ export default {
       const chart = /^\/api\/chart\/([0-9A-Z]{6})$/.exec(path);
       if (chart) return await apiChart(chart[1]);
       const m = /^\/api\/ipos\/(\d+)\/detail$/.exec(path);
-      if (m) return json(await getDetail(m[1]));
+      if (m) return json(await getDetailFull(m[1]));
       if (path.startsWith('/api/')) return json({ error: 'not found' }, 404);
       // 사이트 소유확인 파일은 .html 경로 그대로 200으로 응답해야 함 (Pages의 .html 리다이렉트 방지)
       const v = /^\/((?:google|naver)[0-9a-f]+)\.html$/.exec(path);
