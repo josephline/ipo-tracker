@@ -120,10 +120,8 @@ export default function App() {
           stats={stats}
           onBack={() => setScreen('home')}
           onReset={() => {
-            if (confirm('지금까지의 기록을 모두 지울까요?')) {
-              updateStats({});
-              setToast('기록을 초기화했어요');
-            }
+            updateStats({});
+            setToast('기록을 초기화했어요');
           }}
         />
       )}
@@ -364,6 +362,13 @@ function Ranking(props: { menus: Menu[]; stats: Stats; onBack: () => void; onRes
   const { menus, stats } = props;
   const ranked = rank(menus, stats).filter((m) => (stats[m.id]?.matches ?? 0) > 0);
   const played = Object.values(stats).some((s) => s.matches > 0);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!confirming) return;
+    const t = setTimeout(() => setConfirming(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirming]);
 
   return (
     <main className="page">
@@ -372,8 +377,19 @@ function Ranking(props: { menus: Menu[]; stats: Stats; onBack: () => void; onRes
           ‹ 뒤로
         </button>
         <h2>짬밥 명예의 전당</h2>
-        <button className="text-btn danger" onClick={props.onReset}>
-          초기화
+        <button
+          className="text-btn danger"
+          disabled={!played}
+          onClick={() => {
+            if (confirming) {
+              setConfirming(false);
+              props.onReset();
+            } else {
+              setConfirming(true);
+            }
+          }}
+        >
+          {confirming ? '한 번 더 누르면 삭제' : '초기화'}
         </button>
       </div>
 
