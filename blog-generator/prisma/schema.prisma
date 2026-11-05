@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// SQLite로 시작합니다. Postgres로 옮길 때는 provider를 "postgresql"로 바꾸고
+// DATABASE_URL만 교체하면 됩니다.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id              String   @id @default(cuid())
+  title           String
+  topic           String
+  keywords        String   // 쉼표로 구분한 키워드
+  audience        String   @default("")
+  tone            String
+  length          String
+  platform        String
+  language        String   @default("ko")
+  outline         String   @default("") // 마크다운 목차
+  content         String   @default("")
+  metaDescription String   @default("")
+  tags            String   @default("[]") // JSON 배열 문자열
+  thumbnailTexts  String   @default("[]") // JSON 배열 문자열
+  summary         String   @default("[]") // JSON 배열 문자열
+  status          String   @default("draft") // draft | done
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
