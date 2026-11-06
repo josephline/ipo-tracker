@@ -3,6 +3,14 @@
 import { parse } from 'node-html-parser';
 import { renderIpoPage, renderNotFound, renderSchedule, renderSitemap, homeLinksBlock, renderCalendar, calendarRange } from './pages.js';
 
+// 요청당 subrequest 사용량 측정 (응답 헤더 X-Subrequests, 무료 플랜 한도 50)
+let SUB = 0;
+const realFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = (...args) => {
+  SUB++;
+  return realFetch(...args);
+};
+
 const CACHE_TTL = 180;
 const DETAIL_CACHE_TTL = 600;
 
@@ -57,16 +65,36 @@ async function fetchPage(url) {
   return new TextDecoder('euc-kr').decode(buf);
 }
 
-// Cache API 기반 TTL 캐시 (isolate가 바뀌어도 유지)
+// 메모리 TTL 캐시: 같은 isolate 안에서만 유지되지만 subrequest 한도(요청당 50회)에 포함되지 않는다
+const MEM = new Map();
+async function memCached(key, ttl, producer, accept = () => true) {
+  const now = Date.now();
+  const hit = MEM.get(key);
+  if (hit && hit.exp > now && accept(hit.data)) return hit.data;
+  const data = await producer();
+  if (accept(data)) MEM.set(key, { data, exp: now + ttl * 1000 });
+  return data;
+}
+
+// Cache API 기반 TTL 캐시 (isolate가 바뀌어도 유지) + 메모리 1차 캐시
 async function cached(key, ttl, producer, accept = () => true) {
+  const now = Date.now();
+  const mem = MEM.get(key);
+  if (mem && mem.exp > now && accept(mem.data)) return mem.data;
   const cache = caches.default;
   const req = new Request(`https://cache.internal/${key}`);
+  SUB++;
   const hit = await cache.match(req);
   if (hit) {
     const data = await hit.json();
-    if (accept(data)) return data;
+    if (accept(data)) {
+      MEM.set(key, { data, exp: now + ttl * 1000 });
+      return data;
+    }
   }
   const data = await producer();
+  MEM.set(key, { data, exp: now + ttl * 1000 });
+  SUB++;
   await cache.put(
     req,
     new Response(JSON.stringify(data), {
@@ -255,7 +283,7 @@ const NAVER_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 const normName = (s) => String(s || '').replace(/\s|\([^)]*\)/g, '').toLowerCase();
 
 function naverIpoCodes() {
-  return cached('naver-ipo-codes', 1800, async () => {
+  return memCached('naver-ipo-codes', 1800, async () => {
     try {
       const r = await fetch('https://m.stock.naver.com/api/stocks/ipo?stockListSortType=IPO&pageSize=100', { headers: NAVER_HEADERS });
       const j = await r.json();
@@ -273,7 +301,7 @@ async function naverCodeFor(name) {
   const n = normName(name);
   const map = await naverIpoCodes();
   if (map[n]) return map[n];
-  return cached(
+  return memCached(
     `naver-code/${n}`,
     86400,
     async () => {
@@ -291,24 +319,19 @@ async function naverCodeFor(name) {
 }
 
 // 네이버가 서버마다 값을 번갈아 주는 경우가 있어, 신청건수는 줄어들 수 없다는 점을 이용해 더 큰 쪽을 유지
+const BEST = new Map();
 async function mergeBest(code, fresh) {
-  const cache = caches.default;
-  const req = new Request(`https://cache.internal/naver-best/${code}`);
-  let prev = null;
-  try {
-    const hit = await cache.match(req);
-    prev = hit ? await hit.json() : null;
-  } catch {}
+  const prev = BEST.get(code) || null;
   let best = fresh;
   if (prev && prev.applications != null && (fresh.applications == null || prev.applications > fresh.applications)) best = prev;
-  await cache.put(req, new Response(JSON.stringify(best), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=86400' } }));
+  BEST.set(code, best);
   return best;
 }
 
 async function naverSubscription(name, ttl = 60) {
   const code = await naverCodeFor(name);
   if (!code) return null;
-  return cached(
+  return memCached(
     `naver-sub/${code}`,
     ttl,
     async () => {
@@ -380,12 +403,6 @@ async function getData() {
     ongoing = await Promise.all(
       ongoing.map(async (ipo) => {
         let out = ipo;
-        if (ipo.no) {
-          try {
-            const d = await getDetail(ipo.no);
-            if (d.sub_rate && !out.rate) out = { ...out, rate: d.sub_rate, rate_raw: `${d.sub_rate}:1` };
-          } catch {}
-        }
         // 청약 진행 중에도 네이버 증권에는 종합 경쟁률·비례 경쟁률·신청 건수가 올라옴
         const nv = await naverSubscription(ipo.name);
         if (nv) {
@@ -413,8 +430,8 @@ async function getData() {
     );
     next.splice(0, next.length, ...nextEnriched);
 
-    // 최근 7일 내 마감 종목도 네이버에서 비례 경쟁률·신청건수를 보강
-    const closedCutoff = new Date(Date.parse(todayKst()) - 7 * 86400000).toISOString().slice(0, 10);
+    // 최근 3일 내 마감 종목도 네이버에서 비례 경쟁률·신청건수를 보강
+    const closedCutoff = new Date(Date.parse(todayKst()) - 3 * 86400000).toISOString().slice(0, 10);
     const closedEnriched = await Promise.all(
       closed.map(async (ipo) => {
         if (!ipo.date_end || ipo.date_end < closedCutoff) return ipo;
@@ -461,6 +478,7 @@ const json = (data, status = 200) =>
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Cache-Control': 'no-cache',
+      'X-Subrequests': String(SUB),
     },
   });
 
@@ -527,7 +545,7 @@ async function apiTodayListed() {
 const html = (body, status = 200, maxAge = 300) =>
   new Response(body, {
     status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}` },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}`, 'X-Subrequests': String(SUB) },
   });
 
 // 38커뮤니케이션에 아직 없는 기관경쟁률·상장일은 네이버 증권에서 보충
@@ -594,6 +612,7 @@ async function apiChart(code) {
 
 export default {
   async fetch(request, env) {
+    SUB = 0;
     const url = new URL(request.url);
     const path = url.pathname;
     try {
