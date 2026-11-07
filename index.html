@@ -1891,7 +1891,7 @@ function buildRateSection(d, cardId) {
 function buildOngoingCards(data) {
   if (!data.length) return buildOngoingEmpty();
 
-  const single = data.length === 1;
+  const single = false; // 1개여도 여러 개일 때와 같은 카드 레이아웃 사용
 
   return `<div class="ongoing-cards${single ? ' single' : ''}">
     ${data.map(d => {
