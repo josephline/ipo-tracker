@@ -1312,6 +1312,35 @@
     .ul-chip:hover { border-color: var(--primary); }
     .ul-chip b { color: var(--text); font-weight: 600; }
 
+    /* ── 후원하기 팝업 ── */
+    .main-nav a.nav-donate { color: var(--ongoing); }
+    .donate-modal { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px 22px 20px; max-height: 94vh; overflow-y: auto; animation: slideUp 0.2s cubic-bezier(.4,0,.2,1); }
+    .dn-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .dn-head h2 { font-size: 19px; font-weight: 800; }
+    .dn-intro { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+    .dn-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .dn-opt { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 6px 12px; color: var(--text2); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: inherit; transition: border-color .15s, background .15s, transform .15s; }
+    .dn-opt:hover { border-color: var(--ongoing); transform: translateY(-1px); }
+    .dn-opt .dn-ico { font-size: 26px; line-height: 1.1; }
+    .dn-opt b { font-size: 14px; font-weight: 800; color: var(--text); }
+    .dn-opt small { font-size: 12px; color: var(--text3); }
+    .dn-opt.active { border-color: var(--ongoing); background: rgba(80,201,110,0.12); }
+    .dn-opt.active b { color: var(--ongoing); }
+    .dn-label { font-size: 12px; font-weight: 700; color: var(--ongoing); margin-bottom: 8px; }
+    .dn-idbox { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+    .dn-idbox code { font-family: 'Consolas', 'Courier New', monospace; font-size: 17px; font-weight: 700; color: var(--text); word-break: break-all; }
+    .dn-copy { flex-shrink: 0; background: rgba(80,201,110,0.14); color: var(--ongoing); border: 1px solid var(--ongoing); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .dn-copy.done { background: var(--ongoing); color: #08210f; }
+    .dn-steps { margin: 0 0 16px 18px; padding: 0; font-size: 13.5px; color: var(--text2); line-height: 1.75; }
+    .dn-steps b { color: var(--text); }
+    .dn-go { width: 100%; background: #1fa653; color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; transition: filter .15s; }
+    .dn-go:hover { filter: brightness(1.1); }
+    .dn-note { font-size: 12px; color: var(--text3); text-align: center; margin-top: 10px; line-height: 1.6; }
+    @media (max-width: 640px) {
+      #donateOverlay { padding: 0; align-items: flex-end; }
+      .donate-modal { max-width: none; border-radius: 18px 18px 0 0; padding: 18px 16px 22px; }
+    }
+
     /* ── 모바일 최적화 ── */
     html { -webkit-text-size-adjust: 100%; }
     body { overflow-x: hidden; }
@@ -1438,6 +1467,7 @@
       <a href="/schedule">청약 일정</a>
       <a href="/calendar">캘린더</a>
       <a href="/guide">이용 가이드</a>
+      <a href="#donate" class="nav-donate" onclick="openDonate();return false;">☕ 후원하기</a>
     </nav>
     <div class="header-right">
       <span class="live-dot">실시간</span>
@@ -2867,8 +2897,64 @@ function closeModalOnOverlay(e) {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
+// ── 후원하기 ──────────────────────────────────────────────────────────────────
+const DONATE_ID = 'bedtime1160';          // 받는 사람 네이버페이 아이디
+const DONATE_URL = 'https://pay.naver.com/'; // 네이버페이 (포인트 → 선물하기)
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    return ok;
+  }
+}
+
+function openDonate() {
+  document.getElementById('donateId').textContent = DONATE_ID;
+  document.getElementById('donateOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDonate() {
+  const o = document.getElementById('donateOverlay');
+  if (!o || o.style.display === 'none') return;
+  o.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function selectDonate(btn) {
+  document.querySelectorAll('.dn-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dnNote').innerHTML =
+    `선택한 금액: ${btn.dataset.name} · ${Number(btn.dataset.amt).toLocaleString()}P<br>후원은 자발적이며 사이트 이용에는 영향이 없어요. 감사합니다 🙏`;
+}
+
+async function copyDonateId() {
+  const ok = await copyText(DONATE_ID);
+  const b = document.getElementById('dnCopy');
+  b.textContent = ok ? '복사됨 ✓' : '길게 눌러 복사';
+  b.classList.toggle('done', ok);
+  setTimeout(() => { b.textContent = '아이디 복사'; b.classList.remove('done'); }, 1800);
+}
+
+async function goDonate() {
+  await copyText(DONATE_ID);
+  window.open(DONATE_URL, '_blank', 'noopener');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.hash === '#donate' || new URLSearchParams(location.search).get('donate')) openDonate();
+});
+
 // ESC 키로 닫기
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDonate(); } });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -2911,6 +2997,32 @@ pollLive();
   </div>
 </div>
 
+<div class="modal-overlay" id="donateOverlay" style="display:none" onclick="if(event.target===this)closeDonate()" role="dialog" aria-modal="true" aria-labelledby="donateTitle">
+  <div class="donate-modal">
+    <div class="dn-head">
+      <h2 id="donateTitle">☕ 후원하기</h2>
+      <button class="modal-close" onclick="closeDonate()" aria-label="닫기">✕</button>
+    </div>
+    <p class="dn-intro">도움이 됐다면 커피 한 잔 후원해 주세요. 쌓아 둔 네이버페이 포인트로 보낼 수 있어요.</p>
+    <div class="dn-options">
+      <button type="button" class="dn-opt active" data-amt="5000" data-name="커피 한 잔" onclick="selectDonate(this)"><span class="dn-ico">☕</span><b>커피 한 잔</b><small>5,000P</small></button>
+      <button type="button" class="dn-opt" data-amt="10000" data-name="밥 한 끼" onclick="selectDonate(this)"><span class="dn-ico">🍚</span><b>밥 한 끼</b><small>10,000P</small></button>
+      <button type="button" class="dn-opt" data-amt="50000" data-name="VVIP" onclick="selectDonate(this)"><span class="dn-ico">👑</span><b>VVIP</b><small>50,000P</small></button>
+    </div>
+    <div class="dn-label">네이버페이 포인트 선물 · 받는 사람 아이디</div>
+    <div class="dn-idbox">
+      <code id="donateId"></code>
+      <button type="button" class="dn-copy" id="dnCopy" onclick="copyDonateId()">아이디 복사</button>
+    </div>
+    <ol class="dn-steps">
+      <li>아래 버튼을 누르면 아이디가 복사되고 <b>네이버페이</b>가 열려요</li>
+      <li><b>포인트 → 선물하기</b>에서 받는 사람 아이디에 붙여넣어요</li>
+    </ol>
+    <button type="button" class="dn-go" onclick="goDonate()">🎁 포인트 선물하러 가기</button>
+    <p class="dn-note" id="dnNote">선택한 금액: 커피 한 잔 · 5,000P<br>후원은 자발적이며 사이트 이용에는 영향이 없어요. 감사합니다 🙏</p>
+  </div>
+</div>
+
 <footer class="site-footer">
   <div class="footer-inner">
     <span class="footer-text">공모주 청약 현황 · 출처: 38커뮤니케이션</span>
@@ -2918,6 +3030,7 @@ pollLive();
     <a href="/guide" class="footer-text" style="text-decoration:none;color:var(--text3)">이용 가이드</a>
     <a href="/about" class="footer-text" style="text-decoration:none;color:var(--text3)">사이트 소개</a>
     <a href="/privacy" class="footer-text" style="text-decoration:none;color:var(--text3)">개인정보처리방침</a>
+    <a href="#donate" onclick="openDonate();return false;" class="footer-text" style="text-decoration:none;color:var(--text3)">후원하기</a>
     <a href="/contact" class="footer-text" style="text-decoration:none;color:var(--text3)">문의하기</a>
     <span class="footer-text" style="color:var(--border)">|</span>
     <a href="mailto:lineblock55@gmail.com" class="lineblock-badge">
