@@ -1474,6 +1474,7 @@
       <a href="/schedule">청약 일정</a>
       <a href="/calendar">캘린더</a>
       <a href="/guide">이용 가이드</a>
+      <a href="#donate" class="nav-donate" onclick="openDonate();return false;">☕ 후원하기</a>
     </nav>
     <div class="header-right">
       <span class="live-dot">실시간</span>
@@ -2955,8 +2956,9 @@ async function goDonate() {
   window.open(DONATE_URL, '_blank', 'noopener');
 }
 
-// 후원하기 메뉴는 내려둔 상태입니다. 다시 켜려면 메뉴 링크와 아래 자동 열림을 복원하세요.
-// document.addEventListener('DOMContentLoaded', () => { if (location.hash === '#donate' || new URLSearchParams(location.search).get('donate')) openDonate(); });
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.hash === '#donate' || new URLSearchParams(location.search).get('donate')) openDonate();
+});
 
 // ESC 키로 닫기
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDonate(); } });
@@ -3035,6 +3037,7 @@ pollLive();
     <a href="/guide" class="footer-text" style="text-decoration:none;color:var(--text3)">이용 가이드</a>
     <a href="/about" class="footer-text" style="text-decoration:none;color:var(--text3)">사이트 소개</a>
     <a href="/privacy" class="footer-text" style="text-decoration:none;color:var(--text3)">개인정보처리방침</a>
+    <a href="#donate" onclick="openDonate();return false;" class="footer-text" style="text-decoration:none;color:var(--text3)">후원하기</a>
     <a href="/contact" class="footer-text" style="text-decoration:none;color:var(--text3)">문의하기</a>
     <span class="footer-text" style="color:var(--border)">|</span>
     <a href="mailto:lineblock55@gmail.com" class="lineblock-badge">
