@@ -126,7 +126,6 @@ ${jsonld.map((j) => `<script type="application/ld+json">${JSON.stringify(j).repl
     <a href="/calendar" class="nav-link">캘린더</a>
     <a href="/guide" class="nav-link">이용 가이드</a>
     <a href="/contact" class="nav-link">문의</a>
-    <a href="/?donate=1" class="nav-link">후원하기</a>
   </div>
 </div></header>
 <main class="page-wrap">
@@ -141,7 +140,6 @@ ${body}
   <a href="/about" class="footer-link">사이트 소개</a>
   <a href="/privacy" class="footer-link">개인정보처리방침</a>
   <a href="/contact" class="footer-link">문의하기</a>
-  <a href="/?donate=1" class="footer-link">후원하기</a>
 </div></footer>
 </body>
 </html>`;
