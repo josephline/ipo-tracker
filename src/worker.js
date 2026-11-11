@@ -308,8 +308,9 @@ async function naverCodeFor(name) {
       try {
         const r = await fetch(`https://ac.stock.naver.com/ac?q=${encodeURIComponent(name)}&target=stock,ipo`, { headers: NAVER_HEADERS });
         const j = await r.json();
-        const hit = (j.items || []).find((x) => x.category === 'ipo' && normName(x.name) === n);
-        return hit ? hit.code : null;
+        // 상장 전에는 category 'ipo'(A+6자리), 상장 후에는 'stock'(6자리)로 내려온다 → 항상 A+6자리로 통일
+        const hit = (j.items || []).find((x) => (x.category === 'ipo' || x.category === 'stock') && normName(x.name) === n);
+        return hit ? (String(hit.code).startsWith('A') ? hit.code : 'A' + hit.code) : null;
       } catch {
         return null;
       }
@@ -463,9 +464,19 @@ async function fetchNaverPrice(code) {
   return null;
 }
 
-async function currentPriceOf(detail) {
+// 38커뮤니케이션의 종목코드는 상장 전 임시 코드인 경우가 있어, 네이버 공모주 코드(A+6자리)를 우선 사용한다
+async function stockCodeFor(name, detail) {
+  try {
+    const nc = await naverCodeFor(name);
+    if (nc) return nc.replace(/^A/, '');
+  } catch {}
+  return detail.stock_code;
+}
+
+async function currentPriceOf(detail, name) {
   let cur = detail.current_price ? parseInt(detail.current_price, 10) : null;
-  if (!cur && detail.stock_code) cur = await fetchNaverPrice(detail.stock_code);
+  const code = name ? await stockCodeFor(name, detail) : detail.stock_code;
+  if (!cur && code) cur = await fetchNaverPrice(code);
   return cur;
 }
 
@@ -501,7 +512,7 @@ async function apiReturns() {
   const out = await Promise.all(
     top.map(async (ipo) => {
       const d = await getDetail(ipo.no);
-      const cur = await currentPriceOf(d);
+      const cur = await currentPriceOf(d, ipo.name);
       const offer = ipo.price;
       return {
         no: ipo.no,
@@ -533,8 +544,8 @@ async function apiTodayListed() {
         name: ipo.name,
         market: ipo.market,
         offer_price: ipo.price,
-        current_price: await currentPriceOf(d),
-        stock_code: d.stock_code,
+        current_price: await currentPriceOf(d, ipo.name),
+        stock_code: await stockCodeFor(ipo.name, d),
         rate: ipo.rate,
       };
     }),
@@ -575,7 +586,7 @@ async function ipoPage(no) {
   const ipo = [...data.ongoing, ...data.new, ...data.closed].find((x) => x.no === no);
   if (!ipo) return html(renderNotFound(), 404, 60);
   const detail = await getDetailFull(no);
-  const current = ipo.status === 'new' ? null : await currentPriceOf(detail);
+  const current = ipo.status === 'new' ? null : await currentPriceOf(detail, ipo.name);
   return html(renderIpoPage(ipo, detail, current));
 }
 
